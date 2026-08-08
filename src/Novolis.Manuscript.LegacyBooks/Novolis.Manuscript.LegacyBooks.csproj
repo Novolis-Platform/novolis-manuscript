@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageId>Novolis.Manuscript.LegacyBooks</PackageId>
+    <IsPackable>true</IsPackable>
+    <RootNamespace>Novolis.Manuscript.LegacyBooks</RootNamespace>
+    <Description>Legacy content/series and content/books adapter that returns NMP/1 ManuscriptSnapshot.</Description>
+    <PackageTags>manuscript;legacy;nmp;novolis</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="YamlDotNet" />
+    <ProjectReference Include="..\Novolis.Manuscript.Protocol\Novolis.Manuscript.Protocol.csproj" />
+  </ItemGroup>
+</Project>

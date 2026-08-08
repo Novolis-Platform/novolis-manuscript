@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageId>Novolis.Manuscript.IO</PackageId>
+    <IsPackable>true</IsPackable>
+    <RootNamespace>Novolis.Manuscript.IO</RootNamespace>
+    <Description>Manuscript tree surgery, working-copy helpers, and git/GitHub façades.</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Novolis.IO.Git" />
+    <PackageReference Include="Novolis.IO.GitHub" />
+    <PackageReference Include="Novolis.IO.Recovery" />
+    <ProjectReference Include="..\Novolis.Manuscript\Novolis.Manuscript.csproj" />
+  </ItemGroup>
+</Project>

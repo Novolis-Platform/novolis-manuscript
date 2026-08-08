@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Novolis.Manuscript/Novolis.Manuscript.csproj" />
+    <Project Path="src/Novolis.Manuscript.Protocol/Novolis.Manuscript.Protocol.csproj" />
+    <Project Path="src/Novolis.Manuscript.LegacyBooks/Novolis.Manuscript.LegacyBooks.csproj" />
+    <Project Path="src/Novolis.Manuscript.IO/Novolis.Manuscript.IO.csproj" />
+    <Project Path="src/Novolis.Manuscript.Export.Pdf/Novolis.Manuscript.Export.Pdf.csproj" />
+    <Project Path="src/Novolis.Manuscript.Export.Audio/Novolis.Manuscript.Export.Audio.csproj" />
+    <Project Path="src/Novolis.Avalonia.Manuscript/Novolis.Avalonia.Manuscript.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Novolis.Manuscript.Unit/Novolis.Manuscript.Unit.csproj" />
+  </Folder>
+</Solution>

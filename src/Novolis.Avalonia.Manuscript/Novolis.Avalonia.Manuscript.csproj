@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageId>Novolis.Avalonia.Manuscript</PackageId>
+    <IsPackable>true</IsPackable>
+    <RootNamespace>Novolis.Avalonia.Manuscript</RootNamespace>
+    <Description>Shared Avalonia chrome helpers for manuscript editors.</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="Novolis.Avalonia.Markdown" />
+    <ProjectReference Include="..\Novolis.Manuscript\Novolis.Manuscript.csproj" />
+  </ItemGroup>
+</Project>

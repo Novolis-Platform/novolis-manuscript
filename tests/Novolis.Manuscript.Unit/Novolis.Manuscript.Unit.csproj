@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Novolis.Manuscript.Unit</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" />
+    <PackageReference Include="Novolis.Audio.Voice.EdgeTts" />
+    <PackageReference Include="Novolis.Markup.Markdown.Rendering" />
+    <PackageReference Include="QuestPDF" />
+    <PackageReference Include="TUnit" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Novolis.Manuscript\Novolis.Manuscript.csproj" />
+    <ProjectReference Include="..\..\src\Novolis.Manuscript.Protocol\Novolis.Manuscript.Protocol.csproj" />
+    <ProjectReference Include="..\..\src\Novolis.Manuscript.LegacyBooks\Novolis.Manuscript.LegacyBooks.csproj" />
+    <ProjectReference Include="..\..\src\Novolis.Manuscript.Export.Pdf\Novolis.Manuscript.Export.Pdf.csproj" />
+    <ProjectReference Include="..\..\src\Novolis.Manuscript.Export.Audio\Novolis.Manuscript.Export.Audio.csproj" />
+    <ProjectReference Include="..\..\src\Novolis.Manuscript.IO\Novolis.Manuscript.IO.csproj" />
+    <ProjectReference Include="..\..\src\Novolis.Avalonia.Manuscript\Novolis.Avalonia.Manuscript.csproj" />
+  </ItemGroup>
+</Project>

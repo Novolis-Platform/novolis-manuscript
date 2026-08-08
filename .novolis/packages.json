@@ -1,0 +1,32 @@
+{
+  "packages": {
+    "Novolis.Manuscript": {
+      "project": "src/Novolis.Manuscript/Novolis.Manuscript.csproj",
+      "paths": ["src/Novolis.Manuscript/**", "tests/Novolis.Manuscript.Unit/**", "Directory.Build.props", "Directory.Packages.props", "global.json"]
+    },
+    "Novolis.Manuscript.Protocol": {
+      "project": "src/Novolis.Manuscript.Protocol/Novolis.Manuscript.Protocol.csproj",
+      "paths": ["src/Novolis.Manuscript.Protocol/**", "tests/Novolis.Manuscript.Unit/Protocol/**", "Directory.Build.props", "Directory.Packages.props", "global.json"]
+    },
+    "Novolis.Manuscript.LegacyBooks": {
+      "project": "src/Novolis.Manuscript.LegacyBooks/Novolis.Manuscript.LegacyBooks.csproj",
+      "paths": ["src/Novolis.Manuscript.LegacyBooks/**", "tests/Novolis.Manuscript.Unit/LegacyBooks/**", "Directory.Build.props", "Directory.Packages.props", "global.json"]
+    },
+    "Novolis.Manuscript.IO": {
+      "project": "src/Novolis.Manuscript.IO/Novolis.Manuscript.IO.csproj",
+      "paths": ["src/Novolis.Manuscript.IO/**", "tests/Novolis.Manuscript.Unit/IO/**", "Directory.Build.props", "Directory.Packages.props", "global.json"]
+    },
+    "Novolis.Manuscript.Export.Pdf": {
+      "project": "src/Novolis.Manuscript.Export.Pdf/Novolis.Manuscript.Export.Pdf.csproj",
+      "paths": ["src/Novolis.Manuscript.Export.Pdf/**", "Directory.Build.props", "Directory.Packages.props", "global.json"]
+    },
+    "Novolis.Manuscript.Export.Audio": {
+      "project": "src/Novolis.Manuscript.Export.Audio/Novolis.Manuscript.Export.Audio.csproj",
+      "paths": ["src/Novolis.Manuscript.Export.Audio/**", "tests/Novolis.Manuscript.Unit/Export/**", "Directory.Build.props", "Directory.Packages.props", "global.json"]
+    },
+    "Novolis.Avalonia.Manuscript": {
+      "project": "src/Novolis.Avalonia.Manuscript/Novolis.Avalonia.Manuscript.csproj",
+      "paths": ["src/Novolis.Avalonia.Manuscript/**", "Directory.Build.props", "Directory.Packages.props", "global.json"]
+    }
+  }
+}

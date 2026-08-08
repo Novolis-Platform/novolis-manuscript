@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageId>Novolis.Manuscript.Protocol</PackageId>
+    <IsPackable>true</IsPackable>
+    <RootNamespace>Novolis.Manuscript.Protocol</RootNamespace>
+    <Description>NMP/1 typed manuscript protocol: workspace discovery, catalog, metadata, and diagnostics.</Description>
+    <PackageTags>manuscript;nmp;protocol;yaml;markdown;novolis</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="YamlDotNet" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="PROTOCOL.md" Pack="true" PackagePath="docs\" />
+  </ItemGroup>
+</Project>

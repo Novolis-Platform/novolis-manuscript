@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageId>Novolis.Manuscript</PackageId>
+    <IsPackable>true</IsPackable>
+    <RootNamespace>Novolis.Manuscript</RootNamespace>
+    <Description>Manuscript workspace catalog, chapter metadata, and diagnostics (no PDF/audio).</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Novolis.IO.Paths" />
+    <PackageReference Include="YamlDotNet" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageId>Novolis.Manuscript.Export.Pdf</PackageId>
+    <IsPackable>true</IsPackable>
+    <RootNamespace>Novolis.Manuscript.Export.Pdf</RootNamespace>
+    <Description>Manuscript PDF export via Markdown rendering.</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Novolis.Markup.Markdown.Rendering" />
+    <ProjectReference Include="..\Novolis.Manuscript\Novolis.Manuscript.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageId>Novolis.Manuscript.Export.Audio</PackageId>
+    <IsPackable>true</IsPackable>
+    <RootNamespace>Novolis.Manuscript.Export.Audio</RootNamespace>
+    <Description>Manuscript TTS: speech planning, voice-map YAML, Edge TTS, audiobook pipeline, and preview.</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Novolis.Audio.Voice.EdgeTts" />
+    <PackageReference Include="NAudio" />
+    <PackageReference Include="YamlDotNet" />
+  </ItemGroup>
+</Project>
