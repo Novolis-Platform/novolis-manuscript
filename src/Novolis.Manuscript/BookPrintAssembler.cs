@@ -110,32 +110,26 @@ public static class BookPrintAssembler
         else if (!string.IsNullOrWhiteSpace(chapter.Title))
             sb.AppendLine("# " + chapter.Title.Trim());
 
+        // Always emit public fields as [!tag] callouts so Markdig keeps a QuoteBlock that
+        // PDF/HTML/TXT can recognize as chapter-metadata. Plain consecutive lines (former
+        // reader path) collapse to one paragraph; soft line breaks become spaces in PDF.
+        foreach (var (tag, value) in chapter.PublicFields)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+                sb.AppendLine($"> [!{tag}] {value}");
+        }
+
         if (includeHidden)
         {
-            foreach (var (tag, value) in chapter.PublicFields)
-            {
-                if (!string.IsNullOrWhiteSpace(value))
-                    sb.AppendLine($"> [!{tag}] {value}");
-            }
-
             foreach (var (key, value) in chapter.HiddenFields.OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase))
             {
                 if (!string.IsNullOrWhiteSpace(value))
                     sb.AppendLine($"> [!{key}] {value}");
             }
         }
-        else
-        {
-            foreach (var line in chapter.ReaderDatelineLines)
-            {
-                if (!string.IsNullOrWhiteSpace(line))
-                    sb.AppendLine(line);
-            }
-        }
 
-        var hasMeta = includeHidden
-            ? chapter.PublicFields.Count > 0 || chapter.HiddenFields.Count > 0
-            : chapter.ReaderDatelineLines.Count > 0;
+        var hasMeta = chapter.PublicFields.Count > 0
+                      || (includeHidden && chapter.HiddenFields.Count > 0);
         if (hasMeta)
             sb.AppendLine();
 

@@ -488,6 +488,26 @@ static class BookCommands
               --json
             """);
     }
+
+    static EditorialOptions ResolveEditorialOptions(BookCliOptions opts)
+    {
+        EditorialOptions pack = opts.EditorialProfile switch
+        {
+            EditorialProfile.Calypso => EditorialProfiles.Calypso(),
+            EditorialProfile.Nonfiction => EditorialProfiles.Nonfiction(),
+            _ => EditorialProfiles.FictionNeutral(),
+        };
+        return new EditorialOptions
+        {
+            Profile = opts.EditorialProfile,
+            EnableLexicon = opts.EnableLexicon ?? pack.EnableLexicon,
+            EnableSlop = opts.EnableSlop,
+            EnableNaming = opts.EnableNaming,
+            ExtraNames = pack.ExtraNames,
+            ForbiddenPhrases = pack.ForbiddenPhrases,
+            PreferPairs = pack.PreferPairs,
+        };
+    }
 }
 
 sealed class BookCliOptions
@@ -637,26 +657,6 @@ sealed class BookCliOptions
             EnableSlop = enableSlop,
             EnableNaming = enableNaming,
             Paths = paths,
-        };
-    }
-
-    static EditorialOptions ResolveEditorialOptions(BookCliOptions opts)
-    {
-        EditorialOptions pack = opts.EditorialProfile switch
-        {
-            EditorialProfile.Calypso => EditorialProfiles.Calypso(),
-            EditorialProfile.Nonfiction => EditorialProfiles.Nonfiction(),
-            _ => EditorialProfiles.FictionNeutral(),
-        };
-        return new EditorialOptions
-        {
-            Profile = opts.EditorialProfile,
-            EnableLexicon = opts.EnableLexicon ?? pack.EnableLexicon,
-            EnableSlop = opts.EnableSlop,
-            EnableNaming = opts.EnableNaming,
-            ExtraNames = pack.ExtraNames,
-            ForbiddenPhrases = pack.ForbiddenPhrases,
-            PreferPairs = pack.PreferPairs,
         };
     }
 

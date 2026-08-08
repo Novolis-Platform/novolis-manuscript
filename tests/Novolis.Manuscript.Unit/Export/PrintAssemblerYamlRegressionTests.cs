@@ -55,8 +55,10 @@ public sealed class PrintAssemblerYamlRegressionTests
         await Assert.That(reader).DoesNotContain("characters:");
         await Assert.That(reader).DoesNotContain("status:");
         await Assert.That(reader).DoesNotContain("---");
-        await Assert.That(reader).Contains("2495.220 12:30");
-        await Assert.That(reader).Contains("Duckville Station");
+        await Assert.That(reader).DoesNotContain("> [!pov]");
+        await Assert.That(reader).Contains("> [!date] 2495.220");
+        await Assert.That(reader).Contains("> [!time] 12:30");
+        await Assert.That(reader).Contains("> [!location] Duckville Station");
         await Assert.That(reader).Contains("James's lunch was spaghetti.");
         await Assert.That(reader.IndexOf("Chapter 1 - Lunch Break", StringComparison.Ordinal))
             .IsLessThan(reader.IndexOf("2495.220", StringComparison.Ordinal));
