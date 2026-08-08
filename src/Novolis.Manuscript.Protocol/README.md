@@ -32,4 +32,4 @@ var catalog = snapshot.Catalog;
 var diagnostics = snapshot.Diagnostics;
 ```
 
-Legacy `content/series` / `content/books` layouts belong in `Novolis.Markup.Manuscript.LegacyBooks`, not this package.
+Legacy `content/series` / `content/books` layouts belong in `Novolis.Manuscript.LegacyBooks`, not this package.
