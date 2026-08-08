@@ -21,11 +21,11 @@
     <ProjectReference Include="..\..\src\Novolis.Manuscript.Protocol\Novolis.Manuscript.Protocol.csproj" />
     <ProjectReference Include="..\..\src\Novolis.Manuscript.LegacyBooks\Novolis.Manuscript.LegacyBooks.csproj" />
     <ProjectReference Include="..\..\src\Novolis.Manuscript.Export.Pdf\Novolis.Manuscript.Export.Pdf.csproj" />
+    <ProjectReference Include="..\..\src\Novolis.Manuscript.Export.Markdown\Novolis.Manuscript.Export.Markdown.csproj" />
     <ProjectReference Include="..\..\src\Novolis.Manuscript.Export.Audio\Novolis.Manuscript.Export.Audio.csproj" />
     <ProjectReference Include="..\..\src\Novolis.Manuscript.IO\Novolis.Manuscript.IO.csproj" />
     <ProjectReference Include="..\..\src\Novolis.Manuscript.Metrics\Novolis.Manuscript.Metrics.csproj" />
     <ProjectReference Include="..\..\src\Novolis.Manuscript.Editorial\Novolis.Manuscript.Editorial.csproj" />
     <ProjectReference Include="..\..\src\Novolis.Manuscript.References\Novolis.Manuscript.References.csproj" />
-    <ProjectReference Include="..\..\src\Novolis.Avalonia.Manuscript\Novolis.Avalonia.Manuscript.csproj" />
   </ItemGroup>
 </Project>

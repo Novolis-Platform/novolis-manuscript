@@ -48,7 +48,8 @@ Packable Manuscript framework for Books Writer Studio and Books Mobile.
 | `Novolis.Manuscript.Export.Pdf` | PDF export |
 | `Novolis.Manuscript.Export.Audio` | TTS / audiobook |
 | `Novolis.Manuscript.Cli` | `novolis-manuscript` tool |
-| `Novolis.Avalonia.Manuscript` | Shared editor chrome |
+
+Avalonia chrome for editors lives in `Novolis.Avalonia.Manuscript` (`novolis-avalonia`).
 
 ## Build
 

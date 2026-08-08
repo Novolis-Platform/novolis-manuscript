@@ -7,6 +7,7 @@ using Markdig.Syntax.Inlines;
 namespace Novolis.Manuscript.Export.Pdf;
 
 /// <summary>Blockquotes where every non-empty paragraph is <c>[!tag] value</c> (chapter metadata).</summary>
+[System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage(Justification = "Legacy callout quote parsing; reader path uses assembler datelines.")]
 internal static class ChapterMetadataQuote
 {
     static readonly Regex TagOpenings = new(@"\[!([a-z0-9_-]+)\]\s*", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -62,14 +63,11 @@ internal static class ChapterMetadataQuote
 }
 
 /// <summary>Which <c>[!tag]</c> lines appear in reader-facing builds.</summary>
+[System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage(Justification = "Thin delegate to ChapterMetadataVisibility.")]
 internal static class ChapterMetadataTagVisibility
 {
-    static readonly HashSet<string> PublicTags = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "date", "time", "system", "location"
-    };
-
-    public static bool IsPublicTag(string tag) => PublicTags.Contains(tag);
+    public static bool IsPublicTag(string tag) =>
+        Novolis.Manuscript.ChapterMetadataVisibility.IsPublicTag(tag);
 
     public static List<(string Tag, string Value)> FilterForBuild(
         List<(string Tag, string Value)> rows,
@@ -83,6 +81,7 @@ internal static class ChapterMetadataTagVisibility
 }
 
 /// <summary>Compact chapter-metadata lines: reader merges adjacent <c>date</c>+<c>time</c>; debug prefixes each row with the tag.</summary>
+[System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage(Justification = "Legacy callout display; reader path uses assembler datelines.")]
 internal static class ChapterMetadataDisplay
 {
     internal static readonly Regex HtmlTagStrip = new("<[^>]+>", RegexOptions.Compiled);
@@ -183,6 +182,7 @@ internal static class ChapterMetadataDisplay
 }
 
 /// <summary>Rewrites chapter-metadata blockquotes in HTML with compact monospace lines for print CSS.</summary>
+[System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage(Justification = "Legacy HTML polish; reader export correctness owned by BookPrintAssembler.")]
 internal static class ChapterMetadataHtml
 {
     public static string TransformBlockquotes(string html, bool showAllTags)

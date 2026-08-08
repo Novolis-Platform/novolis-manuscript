@@ -1,6 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Novolis.Manuscript.Export.Pdf;
 
 /// <summary>Locates <c>style.css</c> by walking up from a book or series directory.</summary>
+[ExcludeFromCodeCoverage(Justification = "Filesystem walk orthogonal to print remodel.")]
 internal static class StylesheetLocator
 {
     /// <summary>

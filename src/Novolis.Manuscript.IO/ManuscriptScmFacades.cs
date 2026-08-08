@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Novolis.IO.Git;
 using Novolis.IO.GitHub;
 using Novolis.IO.Recovery;
@@ -16,6 +17,7 @@ public static class ManuscriptWorkingCopy
 }
 
 /// <summary>Local git façade for manuscript content roots.</summary>
+[ExcludeFromCodeCoverage(Justification = "Thin wrapper over GitRepositoryService (requires a real git repo).")]
 public sealed class ManuscriptGitWorkspace
 {
     readonly GitRepositoryService _git;
@@ -30,6 +32,7 @@ public sealed class ManuscriptGitWorkspace
 }
 
 /// <summary>Sparse GitHub mirror façade for manuscript content prefixes.</summary>
+[ExcludeFromCodeCoverage(Justification = "Thin wrapper over SparseRepoMirror (network/git).")]
 public sealed class ManuscriptSparseMirror
 {
     readonly SparseRepoMirror _mirror;

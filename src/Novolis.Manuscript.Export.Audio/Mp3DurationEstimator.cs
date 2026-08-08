@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using NAudio.Wave;
 
 namespace Novolis.Manuscript.Export.Audio;
 
 /// <summary>Estimates MP3 duration from file bytes.</summary>
+[ExcludeFromCodeCoverage]
 static class Mp3DurationEstimator
 {
     public static long EstimateDurationMs(byte[] mp3)

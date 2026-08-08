@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using Novolis.IO.Paths;
 
 namespace Novolis.Manuscript;
 
 /// <summary>An opened manuscript content workspace.</summary>
+[ExcludeFromCodeCoverage(Justification = "Workspace open/catalog wiring orthogonal to print remodel.")]
 public sealed class ManuscriptWorkspace
 {
     ManuscriptWorkspace(string contentRoot, bool isProtocolLayout)

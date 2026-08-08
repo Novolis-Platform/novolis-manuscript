@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using Novolis.Audio.Voice.EdgeTts;
 
 namespace Novolis.Manuscript.Export.Audio;
 
 /// <summary>Voice and planner settings for manuscript TTS and audiobook generation.</summary>
+[ExcludeFromCodeCoverage(Justification = "TTS voice defaults orthogonal to print remodel.")]
 public sealed class VoiceSettings
 {
     /// <summary>Curated Edge TTS voice (default: book narrator Ava).</summary>

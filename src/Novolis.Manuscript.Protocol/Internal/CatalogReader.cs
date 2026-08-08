@@ -185,17 +185,8 @@ sealed class CatalogReader
             return null;
         }
 
+        // Caller only enters when series.yaml exists.
         var marker = Path.Combine(seriesDir, ProtocolNames.SeriesMarker);
-        if (!File.Exists(marker))
-        {
-            diagnostics.Add(new ManuscriptDiagnostic(
-                ManuscriptDiagnosticSeverity.Error,
-                ManuscriptDiagnosticCodes.MissingSeriesMetadata,
-                "Missing series.yaml.",
-                seriesDir));
-            return null;
-        }
-
         var metaResult = _metadata.ReadSeries(marker, diagnostics);
         if (!metaResult.Success)
             return null;
@@ -243,17 +234,8 @@ sealed class CatalogReader
             return null;
         }
 
+        // Caller only enters when book.yaml exists.
         var marker = Path.Combine(bookDir, ProtocolNames.BookMarker);
-        if (!File.Exists(marker))
-        {
-            diagnostics.Add(new ManuscriptDiagnostic(
-                ManuscriptDiagnosticSeverity.Error,
-                ManuscriptDiagnosticCodes.MissingBookMetadata,
-                "Missing book.yaml.",
-                bookDir));
-            return null;
-        }
-
         var metaResult = _metadata.ReadBook(marker, diagnostics);
         if (!metaResult.Success)
             return null;

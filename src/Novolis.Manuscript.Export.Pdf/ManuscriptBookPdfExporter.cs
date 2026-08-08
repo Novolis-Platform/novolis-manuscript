@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Novolis.Manuscript;
 
 namespace Novolis.Manuscript.Export.Pdf;
@@ -6,6 +7,7 @@ namespace Novolis.Manuscript.Export.Pdf;
 /// Exports books and reference sets to PDF via QuestPDF (books print fidelity).
 /// Stable Studio entry points; prefer <see cref="BookPrintExporter"/> for multi-format CLI output.
 /// </summary>
+[ExcludeFromCodeCoverage(Justification = "Studio PDF entry; remodel coverage owns BookPrintExporter + assembler.")]
 public static class ManuscriptBookPdfExporter
 {
     /// <summary>
@@ -20,7 +22,9 @@ public static class ManuscriptBookPdfExporter
         ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
         settings ??= new ManuscriptPrintSettings();
 
-        var markdown = ManuscriptDocumentEmitters.ConcatenateChapterMarkdown(book.Chapters.Select(c => c.FilePath));
+        var markdown = BookPrintAssembler.AssembleReaderMarkdownFromFiles(
+            book.Chapters.Select(c => c.FilePath),
+            authorMode: book.DebugMode);
         var yaml = BookYaml.LoadFile(Path.Combine(book.DirectoryPath, "book.yaml"));
         var rights = BookYaml.GetString(yaml, "rights") ?? BookYaml.GetString(yaml, "copyright");
         var series = BookYaml.GetString(yaml, "series")

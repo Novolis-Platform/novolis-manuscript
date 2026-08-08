@@ -6,30 +6,20 @@ namespace Novolis.Manuscript.Editorial;
 /// <summary>Known spelling / naming variants mapped to canonical forms.</summary>
 public static class NamingRules
 {
-    /// <summary>Built-in Calypso core cast variants (variant → canonical).</summary>
-    public static readonly IReadOnlyDictionary<string, string> CalypsoCoreNames =
-        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["Marshe"] = "Marsh",
-            ["Marsch"] = "Marsh",
-            ["Rynn"] = "Ryn",
-            ["Rin"] = "Ryn",
-            ["Mirra"] = "Mira",
-            ["Myra"] = "Mira",
-            ["Kethera"] = "Kethra",
-            ["Kethera Sel"] = "Kethra Sel",
-            ["Ixah"] = "Ixa",
-            ["James Simmon"] = "James Simmons",
-        };
+    /// <summary>
+    /// Calypso cast variants — prefer <see cref="EditorialProfiles.CalypsoNames"/>.
+    /// Kept for callers that still reference the old name.
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> CalypsoCoreNames => EditorialProfiles.CalypsoNames;
 
-    /// <summary>Scans prose for known naming variants.</summary>
+    /// <summary>Scans prose for known naming variants (only the supplied map; no built-in cast).</summary>
     public static IReadOnlyList<DiagnosticFinding> Scan(
         string text,
         IReadOnlyDictionary<string, string>? extraNames = null,
         string? path = null)
     {
         ArgumentNullException.ThrowIfNull(text);
-        var map = new Dictionary<string, string>(CalypsoCoreNames, StringComparer.OrdinalIgnoreCase);
+        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         if (extraNames is not null)
         {
             foreach (var (variant, canonical) in extraNames)
@@ -44,7 +34,6 @@ public static class NamingRules
 
         var findings = new List<DiagnosticFinding>();
         var lines = text.Replace("\r\n", "\n").Split('\n');
-        // Longest variants first.
         var variants = map.Keys.OrderByDescending(k => k.Length).ThenBy(k => k, StringComparer.Ordinal).ToList();
 
         for (var i = 0; i < lines.Length; i++)

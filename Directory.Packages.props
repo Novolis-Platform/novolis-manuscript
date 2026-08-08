@@ -18,6 +18,7 @@
     <PackageVersion Include="Novolis.IO.Indexing" Version="2026.1.*" />
     <PackageVersion Include="Novolis.IO.Paths" Version="2026.1.*" />
     <PackageVersion Include="Novolis.IO.Recovery" Version="2026.1.*" />
+    <PackageVersion Include="Novolis.Markup.Markdown" Version="2026.1.*" />
     <PackageVersion Include="Novolis.Markup.Markdown.Rendering" Version="2026.1.*" />
     <PackageVersion Include="QuestPDF" Version="2025.7.4" />
     <PackageVersion Include="TUnit" Version="1.44.39" />

@@ -87,6 +87,18 @@ static class PrintCommands
                         : ws.Catalog.Load(ws.ContentRoot).FirstOrDefault(s => s.Id == seriesId)?.Title,
                 });
             Console.WriteLine($"PDF: {paths.PdfPath}");
+
+            var mdPaths = Novolis.Manuscript.Export.Markdown.ManuscriptMarkdownExporter.ExportBook(
+                book,
+                outDir,
+                new Novolis.Manuscript.Export.Markdown.ManuscriptMarkdownExportOptions
+                {
+                    AuthorMode = opts.Debug,
+                    SeriesTitle = opts.Series is null
+                        ? null
+                        : ws.Catalog.Load(ws.ContentRoot).FirstOrDefault(s => s.Id == seriesId)?.Title,
+                });
+            Console.WriteLine($"Markdown: {mdPaths.ReaderMarkdownPath}");
         }
 
         return 0;

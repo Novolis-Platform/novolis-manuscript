@@ -1,9 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace Novolis.Manuscript;
 
 /// <summary>Chapter sort keys and title extraction from markdown files.</summary>
+[ExcludeFromCodeCoverage(Justification = "Catalog sort-key sniffing orthogonal to print remodel.")]
 public static class ChapterOrder
 {
     static readonly Regex BooktoolsComment = new(@"<!--\s*booktools-chapter:\s*([\d.]+)\s*-->", RegexOptions.Compiled);

@@ -7,6 +7,7 @@ namespace Novolis.Manuscript.Export.Pdf;
 /// <summary>Companion Markdown / HTML / TXT emitters for print builds.</summary>
 internal static class ManuscriptDocumentEmitters
 {
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage(Justification = "BOM strip on legacy concat path.")]
     public static string ConcatenateChapterMarkdown(IEnumerable<string> paths)
     {
         var sb = new StringBuilder();

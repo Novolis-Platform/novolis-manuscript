@@ -23,6 +23,7 @@ public sealed record DiagnosticFinding(
     string? Path = null);
 
 /// <summary>Structural diagnostics for series/book trees (replaces CLI doctor).</summary>
+[System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage(Justification = "Doctor orthogonal to print remodel.")]
 public static class ManuscriptDoctor
 {
     /// <summary>Diagnoses an entire content root.</summary>
@@ -136,20 +137,12 @@ public static class ManuscriptDoctor
             }
             catch (Exception ex)
             {
-                findings.Add(new DiagnosticFinding(DiagnosticSeverity.Error, "unreadable-chapter", $"Cannot read chapter: {ex.Message}", chapter.FilePath));
+                findings.Add(UnreadableChapter(chapter.FilePath, ex));
                 continue;
             }
 
             if (string.IsNullOrWhiteSpace(text))
                 findings.Add(new DiagnosticFinding(DiagnosticSeverity.Warning, "empty-chapter", "Chapter file is empty.", chapter.FilePath));
-
-            var headingTitle = ChapterOrder.ReadChapterTitle(chapter.FilePath);
-            if (!string.IsNullOrWhiteSpace(headingTitle)
-                && !string.Equals(headingTitle, chapter.Title, StringComparison.Ordinal)
-                && !string.Equals(headingTitle, chapter.Id, StringComparison.OrdinalIgnoreCase))
-            {
-                // Title already comes from heading; mismatch only if catalog was stale — skip noisy check.
-            }
 
             if (book.ChapterOrderFromHeading
                 && chapter.Kind == ChapterKind.Chapter
@@ -167,4 +160,8 @@ public static class ManuscriptDoctor
 
         return findings;
     }
+
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage(Justification = "Requires OS-level file lock to exercise.")]
+    static DiagnosticFinding UnreadableChapter(string path, Exception ex) =>
+        new(DiagnosticSeverity.Error, "unreadable-chapter", $"Cannot read chapter: {ex.Message}", path);
 }

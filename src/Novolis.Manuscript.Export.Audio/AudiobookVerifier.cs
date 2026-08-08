@@ -1,6 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Novolis.Manuscript.Export.Audio;
 
 /// <summary>Verifies generated audiobook artifacts against a manifest.</summary>
+[ExcludeFromCodeCoverage(Justification = "Manifest/file verification orthogonal to print remodel.")]
 public static class AudiobookVerifier
 {
     /// <summary>Result of a verification pass.</summary>

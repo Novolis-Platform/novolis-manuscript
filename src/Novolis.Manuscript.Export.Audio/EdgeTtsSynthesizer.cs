@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using Novolis.Audio.Voice.EdgeTts;
 
 namespace Novolis.Manuscript.Export.Audio;
 
 /// <summary><see cref="ISynthesizer"/> backed by <see cref="EdgeTtsClient"/>.</summary>
+[ExcludeFromCodeCoverage(Justification = "Requires live Edge TTS network I/O.")]
 public sealed class EdgeTtsSynthesizer : ISynthesizer, IDisposable
 {
     readonly EdgeTtsClient _client;

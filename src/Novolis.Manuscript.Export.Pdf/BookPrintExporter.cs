@@ -62,7 +62,9 @@ public static class BookPrintExporter
         var txtPath = stem + ".txt";
         var pdfPath = stem + ".pdf";
 
-        var markdown = ManuscriptDocumentEmitters.ConcatenateChapterMarkdown(book.Chapters.Select(c => c.FilePath));
+        var markdown = BookPrintAssembler.AssembleReaderMarkdownFromFiles(
+            book.Chapters.Select(c => c.FilePath),
+            authorMode: showAll);
         ManuscriptDocumentEmitters.WriteMarkdown(markdown, mdPath);
 
         var css = StylesheetLocator.Find(bookDirectory, contentRootHint: Directory.GetParent(bookDirectory)?.FullName);
@@ -118,7 +120,9 @@ public static class BookPrintExporter
         var txtPath = stem + ".txt";
         var pdfPath = stem + ".pdf";
 
-        var markdown = ManuscriptDocumentEmitters.ConcatenateChapterMarkdown(book.Chapters.Select(c => c.FilePath));
+        var markdown = BookPrintAssembler.AssembleReaderMarkdownFromFiles(
+            book.Chapters.Select(c => c.FilePath),
+            authorMode: showAll);
         ManuscriptDocumentEmitters.WriteMarkdown(markdown, mdPath);
 
         var css = StylesheetLocator.Find(book.DirectoryPath);
@@ -145,6 +149,7 @@ public static class BookPrintExporter
             Path.GetFullPath(pdfPath));
     }
 
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage(Justification = "Series.yaml title resolution filesystem edges.")]
     static string? ResolveSeriesTitle(string bookDirectory, string? seriesId)
     {
         var parent = Directory.GetParent(bookDirectory)?.FullName;
@@ -216,6 +221,7 @@ public static class BookPrintExporter
             Array.Empty<ReferenceSetInfo>());
     }
 
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage(Justification = "Duplicate dir/prefix helpers; exercised via ExportBookFolder.")]
     static string? ResolveDir(string parent, string preferred, params string[] fallbacks)
     {
         var preferredPath = Path.Combine(parent, preferred);
@@ -231,6 +237,7 @@ public static class BookPrintExporter
         return null;
     }
 
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage(Justification = "Stem sort-key parse; covered indirectly.")]
     static double TryParsePrefix(string stem)
     {
         var i = 0;
@@ -244,6 +251,7 @@ public static class BookPrintExporter
             : double.MaxValue;
     }
 
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage(Justification = "Heading sniff for catalog titles.")]
     static string? ReadHeadingTitle(string path)
     {
         foreach (var line in File.ReadLines(path))

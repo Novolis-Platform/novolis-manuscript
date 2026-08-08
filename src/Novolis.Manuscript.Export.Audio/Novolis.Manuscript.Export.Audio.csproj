@@ -10,5 +10,9 @@
     <PackageReference Include="Novolis.Audio.Voice.EdgeTts" />
     <PackageReference Include="NAudio" />
     <PackageReference Include="YamlDotNet" />
+    <ProjectReference Include="..\Novolis.Manuscript\Novolis.Manuscript.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Novolis.Manuscript.Unit" />
   </ItemGroup>
 </Project>

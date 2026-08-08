@@ -5,12 +5,12 @@
     <Project Path="src/Novolis.Manuscript.LegacyBooks/Novolis.Manuscript.LegacyBooks.csproj" />
     <Project Path="src/Novolis.Manuscript.IO/Novolis.Manuscript.IO.csproj" />
     <Project Path="src/Novolis.Manuscript.Export.Pdf/Novolis.Manuscript.Export.Pdf.csproj" />
+    <Project Path="src/Novolis.Manuscript.Export.Markdown/Novolis.Manuscript.Export.Markdown.csproj" />
     <Project Path="src/Novolis.Manuscript.Export.Audio/Novolis.Manuscript.Export.Audio.csproj" />
     <Project Path="src/Novolis.Manuscript.Metrics/Novolis.Manuscript.Metrics.csproj" />
     <Project Path="src/Novolis.Manuscript.Editorial/Novolis.Manuscript.Editorial.csproj" />
     <Project Path="src/Novolis.Manuscript.References/Novolis.Manuscript.References.csproj" />
     <Project Path="src/Novolis.Manuscript.Cli/Novolis.Manuscript.Cli.csproj" />
-    <Project Path="src/Novolis.Avalonia.Manuscript/Novolis.Avalonia.Manuscript.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Novolis.Manuscript.Unit/Novolis.Manuscript.Unit.csproj" />

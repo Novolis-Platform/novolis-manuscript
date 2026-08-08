@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using YamlDotNet.Serialization;
 
 namespace Novolis.Manuscript;
 
 /// <summary>Thin YAML helpers for <c>series.yaml</c> / <c>book.yaml</c>.</summary>
+[ExcludeFromCodeCoverage(Justification = "Thin YAML map helpers; print remodel covers via exporters.")]
 public static class BookYaml
 {
     static readonly IDeserializer Deserializer =

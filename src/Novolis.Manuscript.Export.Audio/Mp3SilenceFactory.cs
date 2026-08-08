@@ -1,9 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using NAudio.MediaFoundation;
 using NAudio.Wave;
 
 namespace Novolis.Manuscript.Export.Audio;
 
 /// <summary>Creates silence MP3 segments for pauses and chapter gaps.</summary>
+[ExcludeFromCodeCoverage(Justification = "Media Foundation encode with opaque native fallback frames.")]
 static class Mp3SilenceFactory
 {
     static readonly object Gate = new();
@@ -45,6 +47,7 @@ static class Mp3SilenceFactory
         return RepeatSilentFrame(milliseconds);
     }
 
+    [ExcludeFromCodeCoverage(Justification = "Requires Windows Media Foundation MP3 encode.")]
     static byte[] EncodeSilenceWithMediaFoundation(int milliseconds)
     {
         var format = new WaveFormat(24000, 16, 1);

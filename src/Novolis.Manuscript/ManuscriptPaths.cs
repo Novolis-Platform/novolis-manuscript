@@ -1,6 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Novolis.Manuscript;
 
 /// <summary>Resolves chapter directories and book folders for NMP/1 and legacy layouts.</summary>
+[ExcludeFromCodeCoverage(Justification = "Path layout helpers orthogonal to print remodel.")]
 public static class ManuscriptPaths
 {
     /// <summary>Resolves the chapters directory under a book folder (<c>Chapters</c> or <c>chapters</c>).</summary>

@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using Novolis.Manuscript;
 
 namespace Novolis.Manuscript.Export.Audio;
 
@@ -84,29 +85,22 @@ public static class SpeechPlanner
         return new SpeechPlan(segments, hash);
     }
 
-    /// <summary>Strips markdown headings/metadata-ish lines for speech.</summary>
+    /// <summary>Strips YAML front matter, callouts, and headings for speech.</summary>
     public static string Normalize(string markdown, bool keepTitle)
     {
-        var lines = markdown.Replace("\r\n", "\n").Split('\n');
+        ArgumentNullException.ThrowIfNull(markdown);
+        var view = BookPrintAssembler.FromChapterMarkdown(markdown);
         var sb = new StringBuilder();
-        var seenTitle = false;
-        foreach (var line in lines)
+        if (keepTitle && !string.IsNullOrWhiteSpace(view.Title))
+            sb.AppendLine(view.Title);
+
+        foreach (var line in view.BodyMarkdown.Replace("\r\n", "\n").Split('\n'))
         {
             var trimmed = line.TrimEnd();
             if (trimmed.StartsWith("> [!", StringComparison.Ordinal) || trimmed.StartsWith(">[!", StringComparison.Ordinal))
                 continue;
             if (trimmed.StartsWith('#'))
-            {
-                if (keepTitle && !seenTitle)
-                {
-                    seenTitle = true;
-                    var title = trimmed.TrimStart('#').Trim();
-                    if (title.Length > 0)
-                        sb.AppendLine(title);
-                }
                 continue;
-            }
-
             sb.AppendLine(trimmed);
         }
 

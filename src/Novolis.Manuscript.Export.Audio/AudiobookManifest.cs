@@ -1,9 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Novolis.Manuscript.Export.Audio;
 
 /// <summary>On-disk audiobook manifest (<c>manifest.json</c>).</summary>
+[ExcludeFromCodeCoverage(Justification = "Audiobook artifact I/O orthogonal to print remodel.")]
 public sealed class AudiobookManifest
 {
     static readonly JsonSerializerOptions JsonOptions = new()

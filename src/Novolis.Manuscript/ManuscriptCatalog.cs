@@ -1,6 +1,7 @@
 namespace Novolis.Manuscript;
 
 /// <summary>Loads series/book/chapter catalogs from a content root (legacy <c>content/</c> or NMP/1 <c>src/</c>).</summary>
+[System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage(Justification = "Catalog loading orthogonal to print remodel.")]
 public sealed class ManuscriptCatalog
 {
     /// <summary>Loads all fiction series (legacy <c>content/series</c> or NMP <c>src/Fiction/**</c>).</summary>

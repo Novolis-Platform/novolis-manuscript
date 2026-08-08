@@ -232,16 +232,32 @@ public static class ManuscriptMetrics
 
     static int? TryTargetWords(Dictionary<string, object?> yaml)
     {
-        if (yaml.TryGetValue("targets", out var targets) && targets is Dictionary<object, object?> map)
+        if (yaml.TryGetValue("targets", out var targets) && targets is not null)
         {
-            foreach (var (k, v) in map)
+            foreach (var (k, v) in EnumerateMap(targets))
             {
-                if (k?.ToString()?.Equals("words", StringComparison.OrdinalIgnoreCase) == true)
+                if (k.Equals("words", StringComparison.OrdinalIgnoreCase))
                     return CoerceInt(v);
             }
         }
 
         return CoerceInt(yaml.TryGetValue("target_words", out var tw) ? tw : null);
+    }
+
+    static IEnumerable<(string Key, object? Value)> EnumerateMap(object map)
+    {
+        if (map is Dictionary<object, object?> objMap)
+        {
+            foreach (var (k, v) in objMap)
+                yield return (k?.ToString() ?? "", v);
+            yield break;
+        }
+
+        if (map is System.Collections.IDictionary dict)
+        {
+            foreach (System.Collections.DictionaryEntry entry in dict)
+                yield return (entry.Key?.ToString() ?? "", entry.Value);
+        }
     }
 
     static int? CoerceInt(object? v) => v switch
@@ -250,8 +266,14 @@ public static class ManuscriptMetrics
         int i => i,
         long l => (int)l,
         double d => (int)d,
+        float f => (int)f,
+        decimal m => (int)m,
+        string s when double.TryParse(s.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedDouble)
+            => (int)parsedDouble,
         string s => int.TryParse(s.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) ? n : null,
-        _ => int.TryParse(v.ToString()?.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var m) ? m : null,
+        _ => double.TryParse(v.ToString()?.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var m)
+            ? (int)m
+            : null,
     };
 
     static int CountNeedles(string text, params string[] needles)

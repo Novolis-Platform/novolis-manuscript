@@ -1,7 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
 using NAudio.MediaFoundation;
 
 namespace Novolis.Manuscript.Export.Audio;
 
+[ExcludeFromCodeCoverage(Justification = "Windows Media Foundation native startup.")]
 static class MediaFoundationSupport
 {
     static bool? _available;

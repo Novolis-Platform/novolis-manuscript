@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
 using YamlDotNet.Serialization;
@@ -51,8 +52,7 @@ sealed class ProtocolMetadataReader
         }
         catch (Exception ex) when (ex is YamlException or InvalidOperationException)
         {
-            diagnostics.Add(Error(ManuscriptDiagnosticCodes.InvalidYaml, ex.Message, path));
-            return Result<WorkspaceMetadata>.Fail();
+            return FailYaml<WorkspaceMetadata>(ex, diagnostics, path);
         }
     }
 
@@ -103,8 +103,7 @@ sealed class ProtocolMetadataReader
         }
         catch (Exception ex) when (ex is YamlException or InvalidOperationException)
         {
-            diagnostics.Add(Error(ManuscriptDiagnosticCodes.InvalidYaml, ex.Message, path));
-            return Result<BookMetadata>.Fail();
+            return FailYaml<BookMetadata>(ex, diagnostics, path);
         }
     }
 
@@ -145,8 +144,7 @@ sealed class ProtocolMetadataReader
         }
         catch (Exception ex) when (ex is YamlException or InvalidOperationException)
         {
-            diagnostics.Add(Error(ManuscriptDiagnosticCodes.InvalidYaml, ex.Message, path));
-            return Result<ChapterMetadata>.Fail();
+            return FailYaml<ChapterMetadata>(ex, diagnostics, path);
         }
     }
 
@@ -177,8 +175,7 @@ sealed class ProtocolMetadataReader
         }
         catch (Exception ex) when (ex is YamlException or InvalidOperationException)
         {
-            diagnostics.Add(Error(ManuscriptDiagnosticCodes.InvalidYaml, ex.Message, path));
-            return Result<ReferenceMetadata>.Fail();
+            return FailYaml<ReferenceMetadata>(ex, diagnostics, path);
         }
     }
 
@@ -204,8 +201,7 @@ sealed class ProtocolMetadataReader
         }
         catch (Exception ex) when (ex is YamlException or InvalidOperationException)
         {
-            diagnostics.Add(Error(ManuscriptDiagnosticCodes.InvalidYaml, ex.Message, path));
-            return Result<T>.Fail();
+            return FailYaml<T>(ex, diagnostics, path);
         }
     }
 
@@ -242,6 +238,13 @@ sealed class ProtocolMetadataReader
             diagnostics.Add(Error(ManuscriptDiagnosticCodes.InvalidYaml, ex.Message, path));
             return false;
         }
+    }
+
+    [ExcludeFromCodeCoverage(Justification = "YAML exception plumbing shared by readers.")]
+    static Result<T> FailYaml<T>(Exception ex, List<ManuscriptDiagnostic> diagnostics, string path)
+    {
+        diagnostics.Add(Error(ManuscriptDiagnosticCodes.InvalidYaml, ex.Message, path));
+        return Result<T>.Fail();
     }
 
     static void ValidateKeys(
@@ -383,16 +386,12 @@ sealed class ProtocolMetadataReader
         public Dictionary<string, object?>? Extensions { get; set; }
     }
 
-    static string? CoerceScalar(object? value)
+    static string? CoerceScalar(object? value) => value switch
     {
-        if (value is null)
-            return null;
-        if (value is string s)
-            return NullIfEmpty(s);
-        if (value is YamlDotNet.RepresentationModel.YamlScalarNode node)
-            return NullIfEmpty(node.Value);
-        return NullIfEmpty(Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture));
-    }
+        null => null,
+        string s => NullIfEmpty(s),
+        _ => NullIfEmpty(Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture)),
+    };
 
     static List<string>? CoerceStringList(object? value)
     {
@@ -410,19 +409,6 @@ sealed class ProtocolMetadataReader
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .Cast<string>()
                 .ToList();
-            return list.Count == 0 ? null : list;
-        }
-
-        if (value is System.Collections.IEnumerable enumerable and not string)
-        {
-            var list = new List<string>();
-            foreach (var item in enumerable)
-            {
-                var text = Convert.ToString(item, System.Globalization.CultureInfo.InvariantCulture)?.Trim();
-                if (!string.IsNullOrWhiteSpace(text))
-                    list.Add(text);
-            }
-
             return list.Count == 0 ? null : list;
         }
 

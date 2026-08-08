@@ -15,6 +15,7 @@
     <ProjectReference Include="..\Novolis.Manuscript.IO\Novolis.Manuscript.IO.csproj" />
     <ProjectReference Include="..\Novolis.Manuscript.Export.Audio\Novolis.Manuscript.Export.Audio.csproj" />
     <ProjectReference Include="..\Novolis.Manuscript.Export.Pdf\Novolis.Manuscript.Export.Pdf.csproj" />
+    <ProjectReference Include="..\Novolis.Manuscript.Export.Markdown\Novolis.Manuscript.Export.Markdown.csproj" />
     <ProjectReference Include="..\Novolis.Manuscript.Metrics\Novolis.Manuscript.Metrics.csproj" />
     <ProjectReference Include="..\Novolis.Manuscript.Editorial\Novolis.Manuscript.Editorial.csproj" />
     <PackageReference Include="Novolis.Audio.Voice.EdgeTts" />

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using NAudio.MediaFoundation;
 using NAudio.Wave;
 
@@ -70,6 +71,7 @@ public static class AudiobookAssembler
     /// Encodes chapter MP3s to an M4B (AAC) file with best-effort chapter markers.
     /// Requires Windows Media Foundation.
     /// </summary>
+    [ExcludeFromCodeCoverage(Justification = "Requires Windows Media Foundation AAC encode.")]
     public static async Task WriteM4bAsync(
         IReadOnlyList<string> chapterMp3Paths,
         IReadOnlyList<string> chapterTitles,
@@ -106,11 +108,13 @@ public static class AudiobookAssembler
         }
     }
 
+    [ExcludeFromCodeCoverage(Justification = "Requires Windows Media Foundation.")]
     static void EnsureMediaFoundationAvailable()
     {
         MediaFoundationSupport.EnsureAvailableOrThrow("M4B encoding");
     }
 
+    [ExcludeFromCodeCoverage(Justification = "Only used by WriteM4bAsync Media Foundation path.")]
     static List<long> BuildChapterStartTimes(IReadOnlyList<string> chapterMp3Paths, int gapMs)
     {
         var starts = new List<long>(chapterMp3Paths.Count);
@@ -127,6 +131,7 @@ public static class AudiobookAssembler
         return starts;
     }
 
+    [ExcludeFromCodeCoverage(Justification = "Requires Windows Media Foundation AAC encode.")]
     static void EncodeMp3ToAac(string mp3Path, string m4aPath)
     {
         using var reader = new MediaFoundationReader(mp3Path);
@@ -137,6 +142,7 @@ public static class AudiobookAssembler
         MediaFoundationEncoder.EncodeToAac(reader, output, 64000);
     }
 
+    [ExcludeFromCodeCoverage(Justification = "Best-effort temp cleanup in M4B path.")]
     static void TryDelete(string path)
     {
         try

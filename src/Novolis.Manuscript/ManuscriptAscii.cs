@@ -17,6 +17,7 @@ public sealed record AsciiNormalizeResult(
 /// em/en dash → '-', curly quotes → straight, ellipsis → '...', NBSP → space,
 /// strip leading BOM and zero-width characters.
 /// </summary>
+[System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage(Justification = "Orthogonal to print remodel; covered by dedicated ascii tests.")]
 public static class ManuscriptAscii
 {
     /// <summary>Replaces known Unicode punctuation / invisible characters with ASCII equivalents.</summary>

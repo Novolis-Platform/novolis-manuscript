@@ -17,7 +17,11 @@ public static class EditorialAnalyzer
         var findings = new List<DiagnosticFinding>();
 
         if (options.LexiconEnabled)
-            findings.AddRange(LexiconRules.Scan(body, path));
+            findings.AddRange(LexiconRules.Scan(
+                body,
+                path,
+                options.ForbiddenPhrases,
+                options.PreferPairs));
         if (options.EnableSlop)
             findings.AddRange(SlopPatternRules.Scan(body, path));
         if (options.EnableNaming)

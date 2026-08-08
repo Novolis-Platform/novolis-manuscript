@@ -11,4 +11,7 @@
     <PackageReference Include="YamlDotNet" />
     <ProjectReference Include="..\Novolis.Manuscript.Protocol\Novolis.Manuscript.Protocol.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Novolis.Manuscript.Unit" />
+  </ItemGroup>
 </Project>

@@ -78,17 +78,15 @@ internal static class QuestPdfDocuments
                 page.Content().Column(col =>
                 {
                     col.Spacing(settings.ParagraphSpacingPt);
-                    var firstTopLevelHeading = true;
+                    var contentColumnHasMaterial = false;
                     foreach (var block in doc)
                     {
-                        if (block is HeadingBlock hb && hb.Level == 1)
-                        {
-                            if (!firstTopLevelHeading)
-                                col.Item().PageBreak();
-                            firstTopLevelHeading = false;
-                        }
+                        if (block is HeadingBlock hb
+                            && ChapterPageBreaks.ShouldBreakBeforeHeading(contentColumnHasMaterial, hb.Level))
+                            col.Item().PageBreak();
 
-                        QuestPdfBlockRenderer.AppendBlock(col, block, showAllTags, settings);
+                        if (QuestPdfBlockRenderer.AppendBlock(col, block, showAllTags, settings))
+                            contentColumnHasMaterial = true;
                     }
                 });
             });
@@ -154,17 +152,15 @@ internal static class QuestPdfDocuments
                         col.Item().PageBreak();
                     }
 
-                    var firstTopLevelHeading = true;
+                    var contentColumnHasMaterial = toc.Count > 0;
                     foreach (var block in doc)
                     {
-                        if (block is HeadingBlock hb && hb.Level == 1)
-                        {
-                            if (!firstTopLevelHeading)
-                                col.Item().PageBreak();
-                            firstTopLevelHeading = false;
-                        }
+                        if (block is HeadingBlock hb
+                            && ChapterPageBreaks.ShouldBreakBeforeHeading(contentColumnHasMaterial, hb.Level))
+                            col.Item().PageBreak();
 
-                        QuestPdfBlockRenderer.AppendBlock(col, block, showAllTags: false, settings);
+                        if (QuestPdfBlockRenderer.AppendBlock(col, block, showAllTags: false, settings))
+                            contentColumnHasMaterial = true;
                     }
                 });
             });

@@ -8,7 +8,9 @@ public sealed class LexiconRulesTests
     [Test]
     public async Task Forbid_flags_warp_and_hyperspace()
     {
-        var findings = LexiconRules.Scan("They engaged the warp drive into hyperspace.");
+        var findings = LexiconRules.Scan(
+            "They engaged the warp drive into hyperspace.",
+            forbiddenPhrases: EditorialProfiles.CalypsoForbiddenPhrases);
         await Assert.That(findings.Any(f => f.Code == EditorialCodes.LexiconForbid && f.Message.Contains("warp drive"))).IsTrue();
         await Assert.That(findings.Any(f => f.Code == EditorialCodes.LexiconForbid && f.Message.Contains("hyperspace"))).IsTrue();
     }
@@ -16,14 +18,18 @@ public sealed class LexiconRulesTests
     [Test]
     public async Task Forbid_allows_warped_homonym()
     {
-        var findings = LexiconRules.Scan("The warped conduit hissed.");
+        var findings = LexiconRules.Scan(
+            "The warped conduit hissed.",
+            forbiddenPhrases: EditorialProfiles.CalypsoForbiddenPhrases);
         await Assert.That(findings.Any(f => f.Code == EditorialCodes.LexiconForbid)).IsFalse();
     }
 
     [Test]
     public async Task Prefer_flags_hallway()
     {
-        var findings = LexiconRules.Scan("He walked the hallway aft.");
+        var findings = LexiconRules.Scan(
+            "He walked the hallway aft.",
+            preferPairs: EditorialProfiles.CalypsoPreferPairs);
         await Assert.That(findings.Any(f => f.Code == EditorialCodes.LexiconPrefer)).IsTrue();
     }
 }
@@ -59,7 +65,7 @@ public sealed class NamingRulesTests
     [Test]
     public async Task Variant_spelling_flags_canonical()
     {
-        var findings = NamingRules.Scan("Marshe spoke from the chair.");
+        var findings = NamingRules.Scan("Marshe spoke from the chair.", EditorialProfiles.CalypsoNames);
         await Assert.That(findings.Count).IsEqualTo(1);
         await Assert.That(findings[0].Code).IsEqualTo(EditorialCodes.NamingVariant);
         await Assert.That(findings[0].Message).Contains("Marsh");
@@ -89,9 +95,24 @@ public sealed class EditorialAnalyzerTests
             Not a collision. A controlled strike.
             They used a phaser.
             """;
-        var findings = EditorialAnalyzer.AnalyzeText(md);
+        var findings = EditorialAnalyzer.AnalyzeText(md, EditorialProfiles.Calypso());
         await Assert.That(findings.Any(f => f.Code == EditorialCodes.SlopCorrelativeNegation)).IsTrue();
         await Assert.That(findings.Any(f => f.Code == EditorialCodes.LexiconForbid)).IsTrue();
+    }
+
+    [Test]
+    public async Task Neutral_fiction_skips_calypso_lexicon()
+    {
+        var findings = EditorialAnalyzer.AnalyzeText(
+            "They engaged warp drive.",
+            new EditorialOptions
+            {
+                Profile = EditorialProfile.Fiction,
+                EnableLexicon = false,
+                EnableSlop = false,
+                EnableNaming = false,
+            });
+        await Assert.That(findings.Count).IsEqualTo(0);
     }
 
     [Test]

@@ -1,9 +1,11 @@
 using System.Buffers.Binary;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace Novolis.Manuscript.Export.Audio;
 
 /// <summary>Best-effort M4B chapter marker injection via QuickTime <c>chpl</c> atom.</summary>
+[ExcludeFromCodeCoverage(Justification = "Only reached from Media Foundation M4B encode path.")]
 static class M4bChapterWriter
 {
     /// <summary>Copies an AAC M4A to M4B and injects chapter markers when possible.</summary>

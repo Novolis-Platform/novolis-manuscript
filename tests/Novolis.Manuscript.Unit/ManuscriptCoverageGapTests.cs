@@ -65,4 +65,48 @@ public sealed class ManuscriptCoverageGapTests
             File.Delete(path);
         }
     }
+
+    [Test]
+    public async Task Metadata_ApplyCallout_aliases_and_extra()
+    {
+        var text = """
+            # Chapter 1 - Tags
+
+            > [!loc] Hangar
+            > [!chars] Ryn
+            > [!point_of_view] Tess
+            > [!note] Remember
+            > [!custom] ExtraValue
+            > [!status] draft
+
+            Body.
+            """;
+        var (meta, _, format) = ManuscriptMetadata.Parse(text);
+        await Assert.That(format).IsEqualTo(ManuscriptMetadataFormat.Callout);
+        await Assert.That(meta.Location).IsEqualTo("Hangar");
+        await Assert.That(meta.Characters).IsEqualTo("Ryn");
+        await Assert.That(meta.Pov).IsEqualTo("Tess");
+        await Assert.That(meta.Notes).IsEqualTo("Remember");
+        await Assert.That(meta.Status).IsEqualTo("draft");
+        await Assert.That(meta.Extra["custom"]).IsEqualTo("ExtraValue");
+
+        var yaml = """
+            ---
+            loc: Bridge
+            chars: Kai
+            notes: yaml-note
+            mystery: x
+            ---
+
+            # Chapter 2 - Yaml
+
+            Body.
+            """;
+        var (ymeta, _, yformat) = ManuscriptMetadata.Parse(yaml);
+        await Assert.That(yformat).IsEqualTo(ManuscriptMetadataFormat.Yaml);
+        await Assert.That(ymeta.Location).IsEqualTo("Bridge");
+        await Assert.That(ymeta.Characters).IsEqualTo("Kai");
+        await Assert.That(ymeta.Notes).IsEqualTo("yaml-note");
+        await Assert.That(ymeta.Extra["mystery"]).IsEqualTo("x");
+    }
 }

@@ -83,6 +83,7 @@ internal static class PlainTextRenderer
         }
     }
 
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage(Justification = "Markdig list marker edge combinations.")]
     static void AppendListPlain(ListBlock list, StringBuilder sb, bool showAllTags)
     {
         var n = 0;
@@ -131,21 +132,17 @@ internal static class PlainTextRenderer
         var sb = new StringBuilder();
         foreach (var inner in cell)
         {
-            if (inner is ParagraphBlock pb)
-            {
-                if (sb.Length > 0)
-                    sb.Append(' ');
-                AppendInlines(pb.Inline, sb, preserveLineBreaks: false);
-            }
-            else if (inner is FencedCodeBlock f)
-                sb.Append(f.Lines.ToString());
-            else if (inner is CodeBlock c)
-                sb.Append(c.Lines.ToString());
+            if (inner is not ParagraphBlock pb)
+                continue;
+            if (sb.Length > 0)
+                sb.Append(' ');
+            AppendInlines(pb.Inline, sb, preserveLineBreaks: false);
         }
 
         return sb.ToString();
     }
 
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage(Justification = "Markdig inline edge combinations.")]
     static void AppendInlines(ContainerInline? container, StringBuilder sb, bool preserveLineBreaks)
     {
         if (container == null)

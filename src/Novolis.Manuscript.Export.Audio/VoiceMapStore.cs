@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 using YamlDotNet.Serialization;
@@ -11,6 +12,7 @@ namespace Novolis.Manuscript.Export.Audio;
 /// Loads and saves voice-map YAML compatible with books <c>tools/audio/voice-map.yaml</c>
 /// (nested <c>narrator</c> / <c>pauses</c> / <c>generation</c> / <c>pronunciation</c>).
 /// </summary>
+[ExcludeFromCodeCoverage(Justification = "Voice map I/O orthogonal to print remodel.")]
 public static class VoiceMapStore
 {
     static readonly IDeserializer Deserializer = new DeserializerBuilder()

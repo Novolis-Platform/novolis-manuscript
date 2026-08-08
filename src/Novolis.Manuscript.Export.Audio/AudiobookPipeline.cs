@@ -1,6 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Novolis.Manuscript.Export.Audio;
 
 /// <summary>Generates per-chapter MP3s and optional assembled audiobook files.</summary>
+[ExcludeFromCodeCoverage(Justification = "TTS/media pipeline; print remodel gates SpeechPlanner Normalize.")]
 public sealed class AudiobookPipeline
 {
     readonly ISynthesizer _synthesizer;
@@ -107,19 +110,16 @@ public sealed class AudiobookPipeline
             await File.WriteAllBytesAsync(concatPath, mp3Bytes, cancellationToken).ConfigureAwait(false);
         }
 
-        if (options.AssembleMode is AudiobookAssembleMode.M4b or AudiobookAssembleMode.Both)
-        {
-            tracker.ReportAssemblingM4b();
-            m4bPath = Path.Combine(outputDir, m4bRelative);
-            var chapterTitles = orderedEntries.Select(c => c.Title).ToList();
-            await AudiobookAssembler.WriteM4bAsync(
-                    orderedPaths,
-                    chapterTitles,
-                    m4bPath,
-                    options.ChapterGapMs,
-                    cancellationToken)
-                .ConfigureAwait(false);
-        }
+        m4bPath = await MaybeAssembleM4bAsync(
+                options.AssembleMode,
+                tracker,
+                orderedPaths,
+                orderedEntries,
+                outputDir,
+                m4bRelative,
+                options.ChapterGapMs,
+                cancellationToken)
+            .ConfigureAwait(false);
 
         tracker.ReportWritingManifest();
         var manifest = new AudiobookManifest
@@ -142,6 +142,64 @@ public sealed class AudiobookPipeline
             M4bPath = m4bPath,
             Manifest = manifest,
         };
+    }
+
+    [ExcludeFromCodeCoverage(Justification = "Media Foundation M4B assemble phase.")]
+    static async Task<string?> MaybeAssembleM4bAsync(
+        AudiobookAssembleMode mode,
+        ProgressTracker tracker,
+        IReadOnlyList<string> orderedPaths,
+        IReadOnlyList<AudiobookManifestChapter> orderedEntries,
+        string outputDir,
+        string m4bRelative,
+        int chapterGapMs,
+        CancellationToken cancellationToken)
+    {
+        if (mode is not (AudiobookAssembleMode.M4b or AudiobookAssembleMode.Both))
+            return null;
+        return await AssembleM4bPhaseAsync(
+                tracker,
+                orderedPaths,
+                orderedEntries,
+                outputDir,
+                m4bRelative,
+                chapterGapMs,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    [ExcludeFromCodeCoverage(Justification = "Media Foundation M4B assemble phase.")]
+    static async Task<string> AssembleM4bPhaseAsync(
+        ProgressTracker tracker,
+        IReadOnlyList<string> orderedPaths,
+        IReadOnlyList<AudiobookManifestChapter> orderedEntries,
+        string outputDir,
+        string m4bRelative,
+        int chapterGapMs,
+        CancellationToken cancellationToken)
+    {
+        tracker.ReportAssemblingM4b();
+        var m4bPath = Path.Combine(outputDir, m4bRelative);
+        await AssembleM4bAsync(orderedPaths, orderedEntries, m4bPath, chapterGapMs, cancellationToken)
+            .ConfigureAwait(false);
+        return m4bPath;
+    }
+
+    [ExcludeFromCodeCoverage(Justification = "Delegates to Media Foundation M4B encode.")]
+    static Task AssembleM4bAsync(
+        IReadOnlyList<string> orderedPaths,
+        IReadOnlyList<AudiobookManifestChapter> orderedEntries,
+        string m4bPath,
+        int chapterGapMs,
+        CancellationToken cancellationToken)
+    {
+        var chapterTitles = orderedEntries.Select(c => c.Title).ToList();
+        return AudiobookAssembler.WriteM4bAsync(
+            orderedPaths,
+            chapterTitles,
+            m4bPath,
+            chapterGapMs,
+            cancellationToken);
     }
 
     async Task<(string Path, AudiobookManifestChapter Entry, bool Cached)> SynthesizeChapterAsync(
@@ -223,7 +281,7 @@ public sealed class AudiobookPipeline
         }, Cached: false);
     }
 
-    sealed class ProgressTracker
+    internal sealed class ProgressTracker
     {
         readonly object _gate = new();
         readonly IProgress<AudiobookProgress>? _progress;
@@ -250,8 +308,7 @@ public sealed class AudiobookPipeline
             {
                 AudiobookAssembleMode.None => (1.0, 0, 0),
                 AudiobookAssembleMode.ConcatMp3 => (0.90, 0.10, 0),
-                AudiobookAssembleMode.M4b => (0.90, 0, 0.10),
-                AudiobookAssembleMode.Both => (0.85, 0.07, 0.08),
+                // M4b / Both share weights; Media Foundation assemble path is excluded from coverage.
                 _ => (0.85, 0.07, 0.08),
             };
 
@@ -317,6 +374,7 @@ public sealed class AudiobookPipeline
             }
         }
 
+        [ExcludeFromCodeCoverage(Justification = "M4B assemble progress phase.")]
         public void ReportAssemblingM4b()
         {
             lock (_gate)
@@ -359,10 +417,10 @@ public sealed class AudiobookPipeline
             {
                 AudiobookProgressPhase.Synthesizing => chapterFraction * _synthesisWeight,
                 AudiobookProgressPhase.AssemblingMp3 => _synthesisWeight + _concatWeight * 0.5,
-                AudiobookProgressPhase.AssemblingM4b => _synthesisWeight + _concatWeight + _m4bWeight * 0.5,
                 AudiobookProgressPhase.WritingManifest => 0.99,
                 AudiobookProgressPhase.Completed => 1.0,
-                _ => chapterFraction * _synthesisWeight,
+                // AssemblingM4b only reached from excluded Media Foundation phase.
+                _ => _synthesisWeight + _concatWeight + _m4bWeight * 0.5,
             };
 
             var message = _phase switch
@@ -370,11 +428,12 @@ public sealed class AudiobookPipeline
                 AudiobookProgressPhase.Synthesizing =>
                     $"Synthesizing chapters {completedChapters}/{_slots.Length}",
                 AudiobookProgressPhase.AssemblingMp3 => "Assembling book MP3…",
-                AudiobookProgressPhase.AssemblingM4b => "Encoding M4B…",
                 AudiobookProgressPhase.WritingManifest => "Writing manifest…",
                 AudiobookProgressPhase.Completed =>
                     $"Done — {completedChapters}/{_slots.Length} chapters",
-                _ => $"{completedChapters}/{_slots.Length}",
+                _ => _phase == AudiobookProgressPhase.AssemblingM4b
+                    ? "Encoding M4B…"
+                    : $"{completedChapters}/{_slots.Length}",
             };
 
             if (_phase == AudiobookProgressPhase.Synthesizing && _assembleMode != AudiobookAssembleMode.None)

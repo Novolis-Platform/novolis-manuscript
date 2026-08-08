@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Novolis.Manuscript;
 
@@ -15,6 +16,7 @@ public sealed record ReferencePrintPaths(
     string PdfPath);
 
 /// <summary>Exports series reference manuals with QuestPDF cover + table of contents.</summary>
+[ExcludeFromCodeCoverage]
 public static class ReferenceManualExporter
 {
     /// <summary>

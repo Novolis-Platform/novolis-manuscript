@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using NAudio.Wave;
 
 namespace Novolis.Manuscript.Export.Audio;
 
 /// <summary>NAudio-backed MP3 playback for speech preview.</summary>
+[ExcludeFromCodeCoverage(Justification = "Requires native audio device / WaveOut.")]
 public sealed class NaudioMp3Player : IAudioPlayer, IDisposable
 {
     readonly object _gate = new();

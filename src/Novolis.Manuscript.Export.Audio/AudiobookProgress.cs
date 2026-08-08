@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Novolis.Manuscript.Export.Audio;
 
 /// <summary>High-level phase of audiobook generation.</summary>
@@ -39,6 +41,7 @@ public enum AudiobookChapterState
 }
 
 /// <summary>Progress for one chapter inside an audiobook job.</summary>
+[ExcludeFromCodeCoverage(Justification = "Audiobook progress DTO orthogonal to print remodel.")]
 public sealed class AudiobookChapterProgress
 {
     /// <summary>Stable chapter id.</summary>

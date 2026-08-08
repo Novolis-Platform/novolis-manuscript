@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 
 namespace Novolis.Manuscript.Export.Audio;
 
 /// <summary>Preview selected manuscript text with current voice settings.</summary>
+[ExcludeFromCodeCoverage(Justification = "Requires synthesizer + audio device; orthogonal to print remodel.")]
 public sealed class SpeechPreview
 {
     /// <summary>Maximum preview text length.</summary>

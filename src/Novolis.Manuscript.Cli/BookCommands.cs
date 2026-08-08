@@ -350,13 +350,7 @@ static class BookCommands
 
         var book = ResolveBook(ws, opts);
         var chaptersDir = ResolveChaptersDir(book.DirectoryPath);
-        var editorialOpts = new EditorialOptions
-        {
-            Profile = opts.EditorialProfile,
-            EnableLexicon = opts.EnableLexicon,
-            EnableSlop = opts.EnableSlop,
-            EnableNaming = opts.EnableNaming,
-        };
+        var editorialOpts = ResolveEditorialOptions(opts);
         var findings = EditorialAnalyzer.AnalyzeChaptersDir(chaptersDir, editorialOpts)
             .Concat(ManuscriptMetadataDebt.Diagnose(chaptersDir))
             .ToList();
@@ -484,7 +478,7 @@ static class BookCommands
               ascii-normalize [--dry-run|--apply] [--relax] [--series/--book | paths...]
               character-slices [--character NAME] [-o PATH]
               editorial [--series/--book | -b PATH]
-                        [--profile fiction|nonfiction]
+                        [--profile fiction|nonfiction|calypso]
                         [--lexicon|--no-lexicon] [--slop|--no-slop] [--naming|--no-naming]
 
             Book selection:
@@ -646,11 +640,32 @@ sealed class BookCliOptions
         };
     }
 
+    static EditorialOptions ResolveEditorialOptions(BookCliOptions opts)
+    {
+        EditorialOptions pack = opts.EditorialProfile switch
+        {
+            EditorialProfile.Calypso => EditorialProfiles.Calypso(),
+            EditorialProfile.Nonfiction => EditorialProfiles.Nonfiction(),
+            _ => EditorialProfiles.FictionNeutral(),
+        };
+        return new EditorialOptions
+        {
+            Profile = opts.EditorialProfile,
+            EnableLexicon = opts.EnableLexicon ?? pack.EnableLexicon,
+            EnableSlop = opts.EnableSlop,
+            EnableNaming = opts.EnableNaming,
+            ExtraNames = pack.ExtraNames,
+            ForbiddenPhrases = pack.ForbiddenPhrases,
+            PreferPairs = pack.PreferPairs,
+        };
+    }
+
     static EditorialProfile ParseEditorialProfile(string value) =>
         value.Trim().ToLowerInvariant() switch
         {
             "fiction" => EditorialProfile.Fiction,
             "nonfiction" => EditorialProfile.Nonfiction,
-            _ => throw new InvalidOperationException("editorial --profile must be fiction or nonfiction."),
+            "calypso" => EditorialProfile.Calypso,
+            _ => throw new InvalidOperationException("editorial --profile must be fiction, nonfiction, or calypso."),
         };
 }
