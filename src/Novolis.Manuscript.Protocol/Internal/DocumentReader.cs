@@ -4,8 +4,11 @@ namespace Novolis.Manuscript.Protocol.Internal;
 
 sealed partial class DocumentReader(ProtocolMetadataReader metadataReader)
 {
-    [GeneratedRegex(@"^(?<order>[1-9][0-9]*)-(?<slug>[a-z0-9]+(?:-[a-z0-9]+)*)\.md$", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"^(?<order>\d+)-(?<slug>[a-z0-9]+(?:-[a-z0-9]+)*)\.md$", RegexOptions.CultureInvariant)]
     private static partial Regex DocumentFileName();
+
+    [GeneratedRegex(@"^(?:00-)?frontmatter\.md$|^.+-frontmatter\.md$", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)]
+    private static partial Regex FrontMatterFileName();
 
     public IReadOnlyList<ManuscriptDocument> ReadDocuments(
         string directory,
@@ -21,6 +24,25 @@ sealed partial class DocumentReader(ProtocolMetadataReader metadataReader)
         foreach (var file in Directory.GetFiles(directory, "*.md").OrderBy(Path.GetFileName, StringComparer.Ordinal))
         {
             var name = Path.GetFileName(file);
+            if (FrontMatterFileName().IsMatch(name))
+            {
+                var textFm = File.ReadAllText(file);
+                if (textFm.StartsWith('\uFEFF'))
+                    textFm = textFm[1..];
+                var (frontMatterFm, bodyFm) = SplitFrontMatter(textFm);
+                var metaFm = metadataReader.ReadChapterFrontMatter(frontMatterFm, file, diagnostics);
+                var metadataFm = metaFm.Success ? metaFm.Value! : new ChapterMetadata();
+                var titleFm = ReadFirstH1(bodyFm) ?? "Front Matter";
+                results.Add(new ManuscriptDocument(
+                    Path.GetFileNameWithoutExtension(name),
+                    0,
+                    titleFm.Trim(),
+                    kind,
+                    file,
+                    metadataFm));
+                continue;
+            }
+
             var match = DocumentFileName().Match(name);
             if (!match.Success)
             {

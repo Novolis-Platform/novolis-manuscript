@@ -131,15 +131,16 @@ sealed class ProtocolMetadataReader
 
             ValidateKeys(path, map, ProtocolNames.ChapterKeys, diagnostics);
             var dto = _deserializer.Deserialize<ChapterYamlDto>(yamlBlock) ?? new ChapterYamlDto();
+            var locations = CoerceStringList(dto.Locations) ?? CoerceStringList(dto.Location);
             return Result<ChapterMetadata>.Ok(new ChapterMetadata(
                 NullIfEmpty(dto.Status),
-                dto.Tags,
-                NullIfEmpty(dto.Date),
+                CoerceStringList(dto.Tags),
+                CoerceScalar(dto.Date),
                 NullIfEmpty(dto.Time),
-                NullIfEmpty(dto.System),
-                dto.Locations,
+                CoerceScalar(dto.System),
+                locations,
                 NullIfEmpty(dto.Pov),
-                dto.Characters,
+                CoerceStringList(dto.Characters),
                 dto.Extensions));
         }
         catch (Exception ex) when (ex is YamlException or InvalidOperationException)
@@ -371,14 +372,62 @@ sealed class ProtocolMetadataReader
     sealed class ChapterYamlDto
     {
         public string? Status { get; set; }
-        public List<string>? Tags { get; set; }
-        public string? Date { get; set; }
+        public object? Tags { get; set; }
+        public object? Date { get; set; }
         public string? Time { get; set; }
-        public string? System { get; set; }
-        public List<string>? Locations { get; set; }
+        public object? System { get; set; }
+        public object? Location { get; set; }
+        public object? Locations { get; set; }
         public string? Pov { get; set; }
-        public List<string>? Characters { get; set; }
+        public object? Characters { get; set; }
         public Dictionary<string, object?>? Extensions { get; set; }
+    }
+
+    static string? CoerceScalar(object? value)
+    {
+        if (value is null)
+            return null;
+        if (value is string s)
+            return NullIfEmpty(s);
+        if (value is YamlDotNet.RepresentationModel.YamlScalarNode node)
+            return NullIfEmpty(node.Value);
+        return NullIfEmpty(Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture));
+    }
+
+    static List<string>? CoerceStringList(object? value)
+    {
+        if (value is null)
+            return null;
+        if (value is string s)
+        {
+            var parts = s.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            return parts.Length == 0 ? null : parts.ToList();
+        }
+
+        if (value is IEnumerable<object> objs)
+        {
+            var list = objs.Select(o => Convert.ToString(o, System.Globalization.CultureInfo.InvariantCulture)?.Trim())
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Cast<string>()
+                .ToList();
+            return list.Count == 0 ? null : list;
+        }
+
+        if (value is System.Collections.IEnumerable enumerable and not string)
+        {
+            var list = new List<string>();
+            foreach (var item in enumerable)
+            {
+                var text = Convert.ToString(item, System.Globalization.CultureInfo.InvariantCulture)?.Trim();
+                if (!string.IsNullOrWhiteSpace(text))
+                    list.Add(text);
+            }
+
+            return list.Count == 0 ? null : list;
+        }
+
+        var single = CoerceScalar(value);
+        return single is null ? null : [single];
     }
 
     sealed class ReferenceYamlDto

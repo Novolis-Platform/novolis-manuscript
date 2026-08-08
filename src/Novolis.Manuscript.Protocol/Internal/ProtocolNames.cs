@@ -57,7 +57,7 @@ static class ProtocolNames
 
     public static readonly HashSet<string> ChapterKeys = new(StringComparer.Ordinal)
     {
-        "status", "tags", "date", "time", "system", "locations", "pov", "characters", "extensions",
+        "status", "tags", "date", "time", "system", "location", "locations", "pov", "characters", "extensions",
     };
 
     public static readonly HashSet<string> ReferenceKeys = new(StringComparer.Ordinal)
