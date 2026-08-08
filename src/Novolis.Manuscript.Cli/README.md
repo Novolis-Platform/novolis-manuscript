@@ -7,6 +7,8 @@ dotnet tool install -g Novolis.Manuscript.Cli --add-source https://nuget.pkg.git
 
 novolis-manuscript book list-books --workspace D:\repos\books
 novolis-manuscript book doctor --series the-calypso-cycle --book calypso
+novolis-manuscript book ascii-normalize --series the-calypso-cycle --book calypso --dry-run
+novolis-manuscript book character-slices --series the-calypso-cycle --book calypso
 novolis-manuscript audio --series the-calypso-cycle --book calypso --dry-run
 novolis-manuscript print --series the-calypso-cycle --book calypso
 novolis-manuscript metrics --workspace D:\repos\books

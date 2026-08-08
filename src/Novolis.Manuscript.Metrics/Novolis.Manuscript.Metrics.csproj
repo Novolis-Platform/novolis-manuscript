@@ -3,7 +3,7 @@
     <PackageId>Novolis.Manuscript.Metrics</PackageId>
     <IsPackable>true</IsPackable>
     <RootNamespace>Novolis.Manuscript.Metrics</RootNamespace>
-    <Description>Manuscript word-count and TODO/FIXME/TK metrics for NMP book trees.</Description>
+    <Description>Manuscript word-count, TODO metrics, and character-slice reports for NMP book trees.</Description>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>

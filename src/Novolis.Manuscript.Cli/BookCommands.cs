@@ -1,7 +1,9 @@
+using System.Text;
 using System.Text.Json;
 using Novolis.IO.Paths;
 using Novolis.Manuscript;
 using Novolis.Manuscript.IO;
+using Novolis.Manuscript.Metrics;
 
 namespace Novolis.Manuscript.Cli;
 
@@ -32,6 +34,8 @@ static class BookCommands
             "insert-after" => InsertAfter(root, opts),
             "insert-between" => InsertBetween(root, opts),
             "ascii-scan" => AsciiScan(root, opts),
+            "ascii-normalize" => AsciiNormalize(root, opts),
+            "character-slices" => CharacterSlices(root, opts),
             _ => throw new InvalidOperationException($"Unknown book command: {command}"),
         };
         return result;
@@ -232,18 +236,17 @@ static class BookCommands
         var issues = new List<object>();
         foreach (var file in Directory.GetFiles(chaptersDir, "*.md"))
         {
-            var text = File.ReadAllText(file);
-            for (var i = 0; i < text.Length; i++)
+            var found = ManuscriptAscii.Scan(File.ReadAllText(file), Path.GetFileName(file), limit: 100 - issues.Count);
+            foreach (var issue in found)
             {
-                var c = text[i];
-                if (c is '\n' or '\r' or '\t')
-                    continue;
-                if (c < 32 || c > 126)
+                issues.Add(new
                 {
-                    issues.Add(new { file = Path.GetFileName(file), index = i, codepoint = $"U+{(int)c:X4}" });
-                    if (issues.Count >= 100)
-                        break;
-                }
+                    file = issue.Path,
+                    line = issue.Line,
+                    column = issue.Column,
+                    index = issue.Index,
+                    codepoint = $"U+{issue.Codepoint:X4}",
+                });
             }
 
             if (issues.Count >= 100)
@@ -254,6 +257,126 @@ static class BookCommands
             issues.Count == 0 ? "ASCII OK." : $"{issues.Count} issue(s).",
             issues, opts.Json);
         return issues.Count == 0 ? 0 : 1;
+    }
+
+    static int AsciiNormalize(string root, BookCliOptions opts)
+    {
+        var files = ResolveAsciiTargets(root, opts);
+        if (files.Count == 0)
+            throw new InvalidOperationException("ascii-normalize needs --series/--book, --book-file, --chapters-dir, or one or more .md paths.");
+
+        if (!opts.Apply && !opts.DryRun)
+            throw new InvalidOperationException("ascii-normalize requires --dry-run or --apply.");
+
+        var rows = new List<object>();
+        var exit = 0;
+        foreach (var path in files)
+        {
+            var result = ManuscriptAscii.NormalizeFile(path, dryRun: opts.DryRun || !opts.Apply, relax: opts.Relax);
+            if (result.Replacements == 0 && !result.HasRemainingNonAscii)
+            {
+                rows.Add(new { file = path, status = "unchanged", replacements = 0 });
+                continue;
+            }
+
+            if (!opts.Relax && result.HasRemainingNonAscii)
+            {
+                exit = 1;
+                var first = result.RemainingIssues.FirstOrDefault();
+                rows.Add(new
+                {
+                    file = path,
+                    status = "blocked",
+                    replacements = result.Replacements,
+                    remaining = first is null ? null : $"U+{first.Codepoint:X4} at {first.Line}:{first.Column}",
+                });
+                if (!opts.Json && first is not null)
+                {
+                    Console.Error.WriteLine(
+                        $"{path}:{first.Line}:{first.Column}: non-ASCII U+{first.Codepoint:X4} remains after known replacements (use --relax to write anyway).");
+                }
+
+                continue;
+            }
+
+            var status = opts.Apply && !opts.DryRun ? "wrote" : "would-apply";
+            rows.Add(new { file = path, status, replacements = result.Replacements });
+            if (!opts.Json)
+                Console.WriteLine($"{path}: {status} ({result.Replacements} replacement(s))");
+        }
+
+        WritePayload(exit == 0, "ascii-normalize",
+            exit == 0 ? $"{rows.Count} file(s)." : "One or more files still have non-ASCII.",
+            rows, opts.Json);
+        return exit;
+    }
+
+    static int CharacterSlices(string root, BookCliOptions opts)
+    {
+        if (!ManuscriptWorkspace.TryOpen(root, out var ws) || ws is null)
+            throw new InvalidOperationException($"Not a manuscript workspace: {root}");
+        var book = ResolveBook(ws, opts);
+        var chaptersDir = ResolveChaptersDir(book.DirectoryPath);
+        var report = ManuscriptCharacterSlices.Build(book.Id, chaptersDir);
+        var markdown = report.ToMarkdown(opts.Character);
+        if (!string.IsNullOrWhiteSpace(opts.OutPath))
+        {
+            var fullOut = Path.IsPathRooted(opts.OutPath)
+                ? opts.OutPath
+                : Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), opts.OutPath));
+            var dir = Path.GetDirectoryName(fullOut);
+            if (!string.IsNullOrWhiteSpace(dir))
+                Directory.CreateDirectory(dir);
+            File.WriteAllText(fullOut, markdown, new UTF8Encoding(false));
+            if (!opts.Json)
+                Console.WriteLine($"Wrote {fullOut}");
+        }
+        else if (!opts.Json)
+        {
+            Console.Write(markdown);
+        }
+
+        if (opts.Json)
+        {
+            WritePayload(true, "character-slices", $"{report.Chapters.Count} chapter(s).", new
+            {
+                label = report.Label,
+                chapters = report.Chapters.Count,
+                missingPov = report.MissingPov.Count,
+                missingCharacters = report.MissingCharacters.Count,
+                characters = report.Characters.Count,
+                markdown,
+            }, json: true);
+        }
+
+        return 0;
+    }
+
+    static List<string> ResolveAsciiTargets(string root, BookCliOptions opts)
+    {
+        var files = new List<string>();
+        foreach (var path in opts.Paths)
+        {
+            var full = Path.GetFullPath(path);
+            if (Directory.Exists(full))
+                files.AddRange(Directory.GetFiles(full, "*.md", SearchOption.TopDirectoryOnly));
+            else
+                files.Add(full);
+        }
+
+        if (!string.IsNullOrWhiteSpace(opts.ChaptersDir)
+            || !string.IsNullOrWhiteSpace(opts.BookFile)
+            || (!string.IsNullOrWhiteSpace(opts.Series) && !string.IsNullOrWhiteSpace(opts.Book)))
+        {
+            if (!ManuscriptWorkspace.TryOpen(root, out var ws) || ws is null)
+                throw new InvalidOperationException($"Not a manuscript workspace: {root}");
+            var book = ResolveBook(ws, opts);
+            files.AddRange(Directory.GetFiles(ResolveChaptersDir(book.DirectoryPath), "*.md", SearchOption.TopDirectoryOnly));
+        }
+
+        return files.Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 
     static BookInfo ResolveBook(ManuscriptWorkspace ws, BookCliOptions opts)
@@ -345,6 +468,8 @@ static class BookCommands
               insert-after --after N --title "..." [--dry-run|--apply]
               insert-between --key N.N --title "..." [--dry-run|--apply]
               ascii-scan
+              ascii-normalize [--dry-run|--apply] [--relax] [--series/--book | paths...]
+              character-slices [--character NAME] [-o PATH]
 
             Book selection:
               -b, --book-file PATH
@@ -363,21 +488,28 @@ sealed class BookCliOptions
     public string? Series { get; init; }
     public string? Book { get; init; }
     public string? Title { get; init; }
+    public string? Character { get; init; }
+    public string? OutPath { get; init; }
     public double? After { get; init; }
     public double? Key { get; init; }
     public double? From { get; init; }
     public double? To { get; init; }
     public bool Apply { get; init; }
     public bool DryRun { get; init; }
+    public bool Relax { get; init; }
     public bool Json { get; init; }
+    public IReadOnlyList<string> Paths { get; init; } = [];
 
     public static BookCliOptions Parse(string[] args)
     {
         string? start = null, bookFile = null, chapters = null, series = null, book = null, title = null;
+        string? character = null, outPath = null;
         double? after = null, key = null, from = null, to = null;
         var apply = false;
         var dry = false;
+        var relax = false;
         var json = false;
+        var paths = new List<string>();
         for (var i = 0; i < args.Length; i++)
         {
             var a = args[i];
@@ -404,6 +536,13 @@ sealed class BookCliOptions
                 case "--title":
                     title = Need();
                     break;
+                case "--character":
+                    character = Need();
+                    break;
+                case "-o":
+                case "--out":
+                    outPath = Need();
+                    break;
                 case "--after":
                     after = double.Parse(Need(), System.Globalization.CultureInfo.InvariantCulture);
                     break;
@@ -422,11 +561,17 @@ sealed class BookCliOptions
                 case "--dry-run":
                     dry = true;
                     break;
+                case "--relax":
+                    relax = true;
+                    break;
                 case "--json":
                     json = true;
                     break;
                 default:
-                    throw new InvalidOperationException($"Unknown option: {a}");
+                    if (a.StartsWith('-'))
+                        throw new InvalidOperationException($"Unknown option: {a}");
+                    paths.Add(a);
+                    break;
             }
         }
 
@@ -438,13 +583,17 @@ sealed class BookCliOptions
             Series = series,
             Book = book,
             Title = title,
+            Character = character,
+            OutPath = outPath,
             After = after,
             Key = key,
             From = from,
             To = to,
             Apply = apply,
             DryRun = dry,
+            Relax = relax,
             Json = json,
+            Paths = paths,
         };
     }
 }
