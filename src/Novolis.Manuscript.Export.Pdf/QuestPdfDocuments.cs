@@ -46,28 +46,24 @@ internal static class QuestPdfDocuments
             {
                 c.Page(page =>
                 {
-                    ApplyPageChrome(page, settings, coverMargins: true);
-                    page.Content().Column(col =>
+                    ApplyPageChrome(page, settings, coverMargins: true, showFooter: false);
+                    // AlignMiddle/AlignCenter — not ExtendVertical spacers (those leave the title high).
+                    page.Content().AlignCenter().AlignMiddle().Column(inner =>
                     {
-                        col.Spacing(10);
-                        col.Item().ExtendVertical();
-                        col.Item().AlignCenter().Column(inner =>
-                        {
-                            inner.Item().Text(cover.Title).FontSize(22).FontFamily(settings.BodyFontFamily).SemiBold();
-                            if (!string.IsNullOrWhiteSpace(cover.Subtitle))
-                                inner.Item().PaddingTop(6).Text(cover.Subtitle).FontSize(13)
-                                    .FontFamily(settings.BodyFontFamily).FontColor(Colors.Grey.Darken2);
-                            if (!string.IsNullOrWhiteSpace(cover.Series))
-                                inner.Item().PaddingTop(10).Text(cover.Series).FontSize(12)
-                                    .FontFamily(settings.BodyFontFamily).FontColor(Colors.Grey.Darken2);
-                            if (!string.IsNullOrWhiteSpace(cover.Author))
-                                inner.Item().PaddingTop(18).Text(cover.Author).FontSize(11)
-                                    .FontFamily(settings.BodyFontFamily);
-                            if (!string.IsNullOrWhiteSpace(cover.Rights))
-                                inner.Item().PaddingTop(36).Text(cover.Rights).FontSize(8.5f)
-                                    .FontFamily(settings.BodyFontFamily).FontColor(Colors.Grey.Medium);
-                        });
-                        col.Item().ExtendVertical();
+                        inner.Item().AlignCenter().Text(cover.Title)
+                            .FontSize(22).FontFamily(settings.BodyFontFamily).SemiBold();
+                        if (!string.IsNullOrWhiteSpace(cover.Subtitle))
+                            inner.Item().AlignCenter().PaddingTop(6).Text(cover.Subtitle).FontSize(13)
+                                .FontFamily(settings.BodyFontFamily).FontColor(Colors.Grey.Darken2);
+                        if (!string.IsNullOrWhiteSpace(cover.Series))
+                            inner.Item().AlignCenter().PaddingTop(10).Text(cover.Series).FontSize(12)
+                                .FontFamily(settings.BodyFontFamily).FontColor(Colors.Grey.Darken2);
+                        if (!string.IsNullOrWhiteSpace(cover.Author))
+                            inner.Item().AlignCenter().PaddingTop(18).Text(cover.Author).FontSize(11)
+                                .FontFamily(settings.BodyFontFamily);
+                        if (!string.IsNullOrWhiteSpace(cover.Rights))
+                            inner.Item().AlignCenter().PaddingTop(28).Text(cover.Rights).FontSize(8.5f)
+                                .FontFamily(settings.BodyFontFamily).FontColor(Colors.Grey.Medium);
                     });
                 });
             }
@@ -111,21 +107,17 @@ internal static class QuestPdfDocuments
             {
                 c.Page(page =>
                 {
-                    ApplyPageChrome(page, settings, coverMargins: true);
-                    page.Content().Column(col =>
+                    ApplyPageChrome(page, settings, coverMargins: true, showFooter: false);
+                    page.Content().AlignCenter().AlignMiddle().Column(inner =>
                     {
-                        col.Spacing(10);
-                        col.Item().ExtendVertical();
-                        col.Item().AlignCenter().Column(inner =>
-                        {
-                            inner.Item().Text(coverTitle).FontSize(22).FontFamily(settings.BodyFontFamily).SemiBold();
-                            if (!string.IsNullOrWhiteSpace(coverSubtitle))
-                                inner.Item().PaddingTop(6).Text(coverSubtitle).FontSize(13)
-                                    .FontFamily(settings.BodyFontFamily).FontColor(Colors.Grey.Darken2);
-                            inner.Item().PaddingTop(28).Text($"Generated {DateTime.UtcNow:yyyy-MM-dd} UTC").FontSize(9)
-                                .FontFamily(settings.BodyFontFamily).FontColor(Colors.Grey.Medium);
-                        });
-                        col.Item().ExtendVertical();
+                        inner.Item().AlignCenter().Text(coverTitle)
+                            .FontSize(22).FontFamily(settings.BodyFontFamily).SemiBold();
+                        if (!string.IsNullOrWhiteSpace(coverSubtitle))
+                            inner.Item().AlignCenter().PaddingTop(6).Text(coverSubtitle).FontSize(13)
+                                .FontFamily(settings.BodyFontFamily).FontColor(Colors.Grey.Darken2);
+                        inner.Item().AlignCenter().PaddingTop(28)
+                            .Text($"Generated {DateTime.UtcNow:yyyy-MM-dd} UTC").FontSize(9)
+                            .FontFamily(settings.BodyFontFamily).FontColor(Colors.Grey.Medium);
                     });
                 });
             }
@@ -167,13 +159,17 @@ internal static class QuestPdfDocuments
         }).GeneratePdf(pdfPath);
     }
 
-    static void ApplyPageChrome(PageDescriptor page, ManuscriptPrintSettings settings, bool coverMargins)
+    static void ApplyPageChrome(
+        PageDescriptor page,
+        ManuscriptPrintSettings settings,
+        bool coverMargins,
+        bool showFooter = true)
     {
         page.Size(settings.PageWidthInches, settings.PageHeightInches, Unit.Inch);
         if (coverMargins)
         {
-            page.MarginTop(1.1f, Unit.Inch);
-            page.MarginBottom(settings.MarginVerticalInches, Unit.Inch);
+            // Symmetric margins so AlignMiddle is optically centered on the page.
+            page.MarginVertical(settings.MarginVerticalInches, Unit.Inch);
             page.MarginHorizontal(settings.MarginHorizontalInches, Unit.Inch);
         }
         else
@@ -183,6 +179,9 @@ internal static class QuestPdfDocuments
             page.MarginLeft(settings.MarginHorizontalInches, Unit.Inch);
             page.MarginRight(settings.MarginRightInches, Unit.Inch);
         }
+
+        if (!showFooter)
+            return;
 
         page.Footer()
             .AlignCenter()
