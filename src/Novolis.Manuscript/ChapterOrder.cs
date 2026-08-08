@@ -13,6 +13,23 @@ public static class ChapterOrder
     static readonly Regex HeadingTitleOnly = new(@"^\s*#\s*Chapter\s+\d+(?:\.\d+)?\s*-\s*(.+)\s*$", RegexOptions.Compiled);
     static readonly Regex HeadingGeneric = new(@"^\s*#\s+(.+)\s*$", RegexOptions.Compiled);
 
+    static readonly Regex FilenamePrefix = new(@"^(\d+(?:\.\d+)?)[-_]", RegexOptions.Compiled);
+
+    /// <summary>Reads a numeric sort key from the filename prefix (NMP/1 ordering authority).</summary>
+    public static double GetFilenameSortKey(string filePath)
+    {
+        var fileName = Path.GetFileName(filePath);
+        if (fileName.Equals("00-frontmatter.md", StringComparison.OrdinalIgnoreCase)
+            || fileName.EndsWith("-frontmatter.md", StringComparison.OrdinalIgnoreCase))
+            return -1;
+
+        var m = FilenamePrefix.Match(fileName);
+        if (m.Success)
+            return double.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture);
+
+        return double.PositiveInfinity;
+    }
+
     /// <summary>Reads a numeric sort key from comments, YAML, or chapter heading.</summary>
     public static double GetSortKey(string filePath)
     {

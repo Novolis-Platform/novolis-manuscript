@@ -1,3 +1,5 @@
+using Novolis.Manuscript.Protocol;
+
 namespace Novolis.Manuscript;
 
 /// <summary>Severity of a diagnostic finding.</summary>
@@ -26,14 +28,63 @@ public static class ManuscriptDoctor
     /// <summary>Diagnoses an entire content root.</summary>
     public static IReadOnlyList<DiagnosticFinding> Diagnose(string contentRoot)
     {
+        var root = Path.GetFullPath(contentRoot);
+        if (File.Exists(Path.Combine(root, "manuscript.yaml")))
+        {
+            var protocol = DiagnoseProtocol(root);
+            // If protocol open failed soft, still run catalog doctor for usable findings.
+            if (protocol.Count == 1 && protocol[0].Code == "nmp-open-failed")
+                return DiagnoseLegacyCatalog(root).Concat(protocol).ToList();
+            return protocol;
+        }
+
+        return DiagnoseLegacyCatalog(root);
+    }
+
+    static List<DiagnosticFinding> DiagnoseLegacyCatalog(string root)
+    {
         var catalog = new ManuscriptCatalog();
         var findings = new List<DiagnosticFinding>();
-        foreach (var series in catalog.Load(contentRoot))
+        foreach (var series in catalog.Load(root))
             findings.AddRange(Diagnose(series));
-        foreach (var book in catalog.LoadStandaloneBooks(contentRoot))
+        foreach (var book in catalog.LoadStandaloneBooks(root))
             findings.AddRange(Diagnose(book));
         return findings;
     }
+
+    static IReadOnlyList<DiagnosticFinding> DiagnoseProtocol(string contentRoot)
+    {
+        try
+        {
+            var snapshot = Novolis.Manuscript.Protocol.ManuscriptWorkspace.Open(contentRoot).Read();
+            return snapshot.Diagnostics
+                .Select(d => new DiagnosticFinding(
+                    MapSeverity(d.Severity),
+                    d.Code,
+                    d.Message,
+                    d.Path))
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            return
+            [
+                new DiagnosticFinding(
+                    DiagnosticSeverity.Error,
+                    "nmp-open-failed",
+                    $"Failed to open NMP workspace: {ex.Message}",
+                    contentRoot),
+            ];
+        }
+    }
+
+    static DiagnosticSeverity MapSeverity(ManuscriptDiagnosticSeverity severity) =>
+        severity switch
+        {
+            ManuscriptDiagnosticSeverity.Error => DiagnosticSeverity.Error,
+            ManuscriptDiagnosticSeverity.Warning => DiagnosticSeverity.Warning,
+            _ => DiagnosticSeverity.Info,
+        };
 
     /// <summary>Diagnoses a series and its books.</summary>
     public static IReadOnlyList<DiagnosticFinding> Diagnose(SeriesInfo series)
