@@ -7,6 +7,9 @@ sealed partial class DocumentReader(ProtocolMetadataReader metadataReader)
     [GeneratedRegex(@"^(?<order>\d+)-(?<slug>[a-z0-9]+(?:-[a-z0-9]+)*)\.md$", RegexOptions.CultureInvariant)]
     private static partial Regex DocumentFileName();
 
+    [GeneratedRegex(@"^appendix-(?<letter>[a-z])-(?<slug>[a-z0-9]+(?:-[a-z0-9]+)*)\.md$", RegexOptions.CultureInvariant)]
+    private static partial Regex AppendixLetterFileName();
+
     [GeneratedRegex(@"^(?:00-)?frontmatter\.md$|^.+-frontmatter\.md$", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)]
     private static partial Regex FrontMatterFileName();
 
@@ -44,7 +47,30 @@ sealed partial class DocumentReader(ProtocolMetadataReader metadataReader)
             }
 
             var match = DocumentFileName().Match(name);
-            if (!match.Success)
+            int order;
+            string slug;
+            if (match.Success)
+            {
+                order = int.Parse(match.Groups["order"].Value, System.Globalization.CultureInfo.InvariantCulture);
+                slug = match.Groups["slug"].Value;
+            }
+            else if (kind == ManuscriptDocumentKind.Appendix)
+            {
+                var appendixMatch = AppendixLetterFileName().Match(name);
+                if (!appendixMatch.Success)
+                {
+                    diagnostics.Add(new ManuscriptDiagnostic(
+                        ManuscriptDiagnosticSeverity.Error,
+                        ManuscriptDiagnosticCodes.InvalidDocumentFilename,
+                        $"Invalid document filename '{name}'. Expected <number>-<slug>.md or appendix-<letter>-<slug>.md.",
+                        file));
+                    continue;
+                }
+
+                order = appendixMatch.Groups["letter"].Value[0] - 'a' + 1;
+                slug = "appendix-" + appendixMatch.Groups["letter"].Value + "-" + appendixMatch.Groups["slug"].Value;
+            }
+            else
             {
                 diagnostics.Add(new ManuscriptDiagnostic(
                     ManuscriptDiagnosticSeverity.Error,
@@ -53,9 +79,6 @@ sealed partial class DocumentReader(ProtocolMetadataReader metadataReader)
                     file));
                 continue;
             }
-
-            var order = int.Parse(match.Groups["order"].Value, System.Globalization.CultureInfo.InvariantCulture);
-            var slug = match.Groups["slug"].Value;
 
             if (seenOrders.TryGetValue(order, out var prior))
             {
@@ -122,9 +145,16 @@ sealed partial class DocumentReader(ProtocolMetadataReader metadataReader)
         {
             if (string.IsNullOrWhiteSpace(line))
                 continue;
+            var trimmed = line.TrimStart();
+            if (trimmed.StartsWith("<!--", StringComparison.Ordinal)
+                && trimmed.Contains("-->", StringComparison.Ordinal))
+                continue;
             if (line.StartsWith("# ", StringComparison.Ordinal))
                 return line[2..].Trim();
-            // First non-empty non-H1 line means no title
+            // First non-empty non-comment non-H1 line means no title yet — keep scanning
+            // only when the line is a markdown thematic break or HTML comment block start.
+            if (trimmed.StartsWith("<!--", StringComparison.Ordinal))
+                continue;
             return null;
         }
 
