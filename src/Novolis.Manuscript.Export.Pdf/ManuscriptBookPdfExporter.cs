@@ -4,14 +4,14 @@ using Novolis.Manuscript;
 namespace Novolis.Manuscript.Export.Pdf;
 
 /// <summary>
-/// Exports books and reference sets to PDF via QuestPDF (books print fidelity).
+/// Exports books and reference sets to PDF via <c>Novolis.Documents</c> + <c>Documents.Skia</c>.
 /// Stable Studio entry points; prefer <see cref="BookPrintExporter"/> for multi-format CLI output.
 /// </summary>
 [ExcludeFromCodeCoverage(Justification = "Studio PDF entry; remodel coverage owns BookPrintExporter + assembler.")]
 public static class ManuscriptBookPdfExporter
 {
     /// <summary>
-    /// Exports an ordered book to a PDF file using QuestPDF (cover, H1 page breaks, chapter-metadata filtering).
+    /// Exports an ordered book to a PDF file (cover, chapter headers, chapter-metadata filtering).
     /// </summary>
     /// <param name="book">Catalog book with chapters already ordered.</param>
     /// <param name="outputPath">Destination <c>.pdf</c> path.</param>
@@ -31,11 +31,10 @@ public static class ManuscriptBookPdfExporter
                      ?? ResolveSeriesTitle(book.DirectoryPath)
                      ?? book.SeriesId;
 
-        QuestPdfDocuments.WriteBookPdf(
+        ManuscriptPagedDocumentBuilder.WriteBookPdf(
             markdown,
             outputPath,
-            new QuestPdfDocuments.BookCoverMeta(book.Title, book.Subtitle, series, book.Author, rights),
-            showAllTags: book.DebugMode,
+            new ManuscriptPagedDocumentBuilder.BookCoverMeta(book.Title, book.Subtitle, series, book.Author, rights),
             settings);
     }
 
@@ -54,23 +53,26 @@ public static class ManuscriptBookPdfExporter
         ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
         settings ??= new ManuscriptPrintSettings();
 
-        var toc = new List<QuestPdfDocuments.TocEntry>();
+        var tocSb = new System.Text.StringBuilder();
         var body = new System.Text.StringBuilder();
+        tocSb.AppendLine("# Contents");
+        tocSb.AppendLine();
         foreach (var file in referenceSet.Files)
         {
             var fileTitle = string.IsNullOrWhiteSpace(file.Title) ? file.Id : file.Title;
-            toc.Add(new QuestPdfDocuments.TocEntry(1, fileTitle));
+            tocSb.Append("- ").AppendLine(fileTitle);
             if (!File.Exists(file.FilePath))
                 continue;
             body.Append(File.ReadAllText(file.FilePath));
             body.AppendLine();
         }
 
-        QuestPdfDocuments.WriteReferencePdf(
+        var fullMd = tocSb + Environment.NewLine + "---" + Environment.NewLine + Environment.NewLine + body;
+
+        ManuscriptPagedDocumentBuilder.WriteReferencePdf(
             referenceSet.Title,
             coverSubtitle: null,
-            toc,
-            body.ToString(),
+            fullMd,
             outputPath,
             settings);
     }

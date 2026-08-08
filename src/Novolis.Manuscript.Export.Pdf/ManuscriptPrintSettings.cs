@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Novolis.Markup.Markdown.Rendering;
 
 namespace Novolis.Manuscript.Export.Pdf;
 
@@ -25,7 +24,7 @@ public sealed class ManuscriptPrintSettings
     /// <summary>Body font size in points.</summary>
     public float BodyFontSize { get; set; } = 11f;
 
-    /// <summary>Heading font size in points (legacy Markup path; QuestPDF uses chapter/H2/H3 sizes).</summary>
+    /// <summary>Generic heading font size in points (chapter/H2/H3 sizes below take precedence for PDF).</summary>
     public float HeadingFontSize { get; set; } = 14f;
 
     /// <summary>Body font family.</summary>
@@ -40,7 +39,7 @@ public sealed class ManuscriptPrintSettings
     /// <summary>Body line height multiplier.</summary>
     public float LineHeight { get; set; } = 1.42f;
 
-    /// <summary>Spacing between block items in the QuestPDF column.</summary>
+    /// <summary>Spacing between block items in points.</summary>
     public float ParagraphSpacingPt { get; set; } = 8f;
 
     /// <summary>Chapter (H1) title size in points.</summary>
@@ -112,22 +111,4 @@ public sealed class ManuscriptPrintSettings
             Directory.CreateDirectory(dir);
         File.WriteAllText(path, JsonSerializer.Serialize(this, JsonOptions));
     }
-
-    /// <summary>Maps to <see cref="MarkdownPdfExportOptions"/> (Markup fallback path).</summary>
-    public MarkdownPdfExportOptions ToPdfOptions(string? title, string? subtitle, string? author) =>
-        new()
-        {
-            Title = title,
-            Subtitle = subtitle,
-            Author = author,
-            IncludeCoverPage = IncludeCover,
-            PageWidthInches = PageWidthInches,
-            PageHeightInches = PageHeightInches,
-            MarginHorizontalInches = MarginHorizontalInches,
-            MarginVerticalInches = MarginVerticalInches,
-            BodyFontSize = BodyFontSize,
-            HeadingFontSize = HeadingFontSize,
-            BodyFontFamily = BodyFontFamily,
-            CodeFontFamily = CodeFontFamily,
-        };
 }

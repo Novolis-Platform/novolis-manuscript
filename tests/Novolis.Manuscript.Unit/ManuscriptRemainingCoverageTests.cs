@@ -247,8 +247,6 @@ public sealed class ManuscriptRemainingCoverageTests
             await Assert.That(File.Exists(settingsPath)).IsTrue();
             var loaded = ManuscriptPrintSettings.Load(settingsPath);
             await Assert.That(loaded.BodyFontSize).IsEqualTo(10f);
-            var pdfOpts = loaded.ToPdfOptions("T", "S", "A");
-            await Assert.That(pdfOpts.Title).IsEqualTo("T");
 
             var paths = BookPrintExporter.ExportBookFolder(
                 book,

@@ -1,6 +1,14 @@
-using Novolis.Markup.Markdown.Rendering;
-
 namespace Novolis.Manuscript.Export.Markdown;
+
+/// <summary>HTML companion theme (GitHub-flavored Markdown CSS, light or dark).</summary>
+public enum ManuscriptHtmlTheme
+{
+    /// <summary>GitHub light theme.</summary>
+    GitHubLight,
+
+    /// <summary>GitHub dark theme.</summary>
+    GitHubDark,
+}
 
 /// <summary>Options for manuscript Markdown / HTML export.</summary>
 public sealed class ManuscriptMarkdownExportOptions
@@ -12,7 +20,7 @@ public sealed class ManuscriptMarkdownExportOptions
     public bool IncludeHtml { get; set; } = true;
 
     /// <summary>HTML theme for companion.</summary>
-    public MarkdownHtmlTheme HtmlTheme { get; set; } = MarkdownHtmlTheme.GitHubLight;
+    public ManuscriptHtmlTheme HtmlTheme { get; set; } = ManuscriptHtmlTheme.GitHubLight;
 
     /// <summary>Force author mode even when book debug is off.</summary>
     public bool AuthorMode { get; set; }

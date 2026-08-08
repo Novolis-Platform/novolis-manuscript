@@ -8,14 +8,14 @@ namespace Novolis.Manuscript.Export.Pdf;
 /// <param name="MarkdownPath">Combined reference Markdown (includes TOC).</param>
 /// <param name="HtmlPath">HTML companion.</param>
 /// <param name="TextPath">Plain-text companion.</param>
-/// <param name="PdfPath">QuestPDF output with cover and TOC.</param>
+/// <param name="PdfPath">PDF output with cover and Contents section.</param>
 public sealed record ReferencePrintPaths(
     string MarkdownPath,
     string HtmlPath,
     string TextPath,
     string PdfPath);
 
-/// <summary>Exports series reference manuals with QuestPDF cover + table of contents.</summary>
+/// <summary>Exports series reference manuals with a cover page and a Contents section.</summary>
 [ExcludeFromCodeCoverage]
 public static class ReferenceManualExporter
 {
@@ -69,7 +69,7 @@ public static class ReferenceManualExporter
         var css = StylesheetLocator.Find(referencesDirectory);
         ManuscriptDocumentEmitters.WriteHtml(title, fullMd, htmlPath, css, showAllTags: false);
         ManuscriptDocumentEmitters.WritePlainText(fullMd, txtPath, showAllTags: false);
-        QuestPdfDocuments.WriteReferencePdf(title, coverSubtitle, toc, bodyMd, pdfPath, settings);
+        ManuscriptPagedDocumentBuilder.WriteReferencePdf(title, coverSubtitle, fullMd, pdfPath, settings);
 
         return new ReferencePrintPaths(
             Path.GetFullPath(mdPath),
@@ -110,7 +110,7 @@ public static class ReferenceManualExporter
         var css = StylesheetLocator.Find(referenceSet.DirectoryPath);
         ManuscriptDocumentEmitters.WriteHtml(referenceSet.Title, fullMd, htmlPath, css, showAllTags: false);
         ManuscriptDocumentEmitters.WritePlainText(fullMd, txtPath, showAllTags: false);
-        QuestPdfDocuments.WriteReferencePdf(referenceSet.Title, coverSubtitle, toc, bodyMd, pdfPath, settings);
+        ManuscriptPagedDocumentBuilder.WriteReferencePdf(referenceSet.Title, coverSubtitle, fullMd, pdfPath, settings);
 
         return new ReferencePrintPaths(
             Path.GetFullPath(mdPath),
@@ -121,10 +121,12 @@ public static class ReferenceManualExporter
 
     readonly record struct RefSource(string AbsolutePath, string ContentRoot);
 
-    static (string fullMd, string bodyMd, List<QuestPdfDocuments.TocEntry> toc) BuildCombinedMarkdown(
+    readonly record struct TocEntry(int Level, string Title);
+
+    static (string fullMd, string bodyMd, List<TocEntry> toc) BuildCombinedMarkdown(
         IReadOnlyList<RefSource> refInputs)
     {
-        var toc = new List<QuestPdfDocuments.TocEntry>();
+        var toc = new List<TocEntry>();
         var body = new StringBuilder();
         string? prevContentRoot = null;
         var prevRelParts = new List<string>();
@@ -144,24 +146,24 @@ public static class ReferenceManualExporter
                 : dir.Split([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar], StringSplitOptions.RemoveEmptyEntries).ToList();
 
             var diverge = 0;
-            var minLen = Math.Min(parts.Count, prevRelParts.Count);
+            var minLen = System.Math.Min(parts.Count, prevRelParts.Count);
             while (diverge < minLen && string.Equals(parts[diverge], prevRelParts[diverge], StringComparison.OrdinalIgnoreCase))
                 diverge++;
 
             for (var i = diverge; i < parts.Count; i++)
             {
                 var subTitle = ToTitleCaseWords(parts[i]);
-                var level = Math.Min(i + 2, 6);
+                var level = System.Math.Min(i + 2, 6);
                 body.AppendLine($"{new string('#', level)} {subTitle}");
                 body.AppendLine();
-                toc.Add(new QuestPdfDocuments.TocEntry(level, subTitle));
+                toc.Add(new TocEntry(level, subTitle));
             }
 
             prevRelParts = [.. parts];
 
             var fileTitle = ToTitleCaseWords(Path.GetFileNameWithoutExtension(rsf.AbsolutePath));
-            var fileLevel = Math.Min(parts.Count + 2, 6);
-            toc.Add(new QuestPdfDocuments.TocEntry(fileLevel, fileTitle));
+            var fileLevel = System.Math.Min(parts.Count + 2, 6);
+            toc.Add(new TocEntry(fileLevel, fileTitle));
 
             if (File.Exists(rsf.AbsolutePath))
             {
@@ -176,7 +178,7 @@ public static class ReferenceManualExporter
         tocSb.AppendLine();
         foreach (var e in toc)
         {
-            var padLen = Math.Max(0, (e.Level - 1) * 2);
+            var padLen = System.Math.Max(0, (e.Level - 1) * 2);
             tocSb.Append(' ', padLen).Append("- ").AppendLine(e.Title);
         }
 

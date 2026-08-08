@@ -1,6 +1,6 @@
+using System.Net;
 using System.Text;
 using Novolis.Markup.Markdown;
-using Novolis.Markup.Markdown.Rendering;
 
 namespace Novolis.Manuscript.Export.Markdown;
 
@@ -39,7 +39,7 @@ public static class ManuscriptMarkdownExporter
         {
             htmlPath = stem + ".reader.html";
             var title = document.Cover.Title;
-            MarkdownHtmlExporter.ExportToFile(readerMd, htmlPath, options.HtmlTheme, title);
+            WriteHtmlCompanion(readerMd, htmlPath, options.HtmlTheme, title);
         }
 
         // Touch fluent MarkdownDocument so Markup.Markdown is a real dependency surface.
@@ -80,6 +80,32 @@ public static class ManuscriptMarkdownExporter
         options ??= new ManuscriptMarkdownExportOptions();
         var book = LoadBookFromDirectory(bookDirectory, seriesId, bookId);
         return ExportBook(book, outputDirectory, options);
+    }
+
+    static void WriteHtmlCompanion(string markdown, string outputPath, ManuscriptHtmlTheme theme, string? title)
+    {
+        var document = MarkdownDocument.Parse(markdown);
+        var bodyHtml = MarkdownToHtmlConverter.Convert(document);
+        var css = theme == ManuscriptHtmlTheme.GitHubDark
+            ? GithubMarkdownCss.Default + GithubMarkdownCss.Other
+            : GithubMarkdownCss.Default;
+
+        var sb = new StringBuilder();
+        sb.AppendLine("<!DOCTYPE html>");
+        sb.AppendLine("<html lang=\"en\">");
+        sb.AppendLine("<head>");
+        sb.AppendLine("  <meta charset=\"utf-8\" />");
+        if (!string.IsNullOrWhiteSpace(title))
+            sb.AppendLine($"  <title>{WebUtility.HtmlEncode(title)}</title>");
+        sb.Append("  <style>").Append(css).AppendLine("</style>");
+        sb.AppendLine("</head>");
+        sb.AppendLine("<body class=\"markdown-body\">");
+        sb.AppendLine(bodyHtml);
+        sb.AppendLine("</body>");
+        sb.AppendLine("</html>");
+
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outputPath))!);
+        File.WriteAllText(outputPath, sb.ToString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
     }
 
     static IMarkdownDocument BuildFluentOutline(BookPrintDocument document)

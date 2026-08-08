@@ -29,10 +29,6 @@ public sealed class ManuscriptExtendedTests
         var settings = ManuscriptPrintSettings.Load(null);
         await Assert.That(settings.IncludeCover).IsTrue();
         await Assert.That(settings.BodyFontSize).IsEqualTo(11f);
-
-        var pdf = settings.ToPdfOptions("Title", "Sub", "Author");
-        await Assert.That(pdf.Title).IsEqualTo("Title");
-        await Assert.That(pdf.IncludeCoverPage).IsTrue();
     }
 
     [Test]

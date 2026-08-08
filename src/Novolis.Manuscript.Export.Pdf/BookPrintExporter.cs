@@ -6,7 +6,7 @@ namespace Novolis.Manuscript.Export.Pdf;
 /// <param name="MarkdownPath">Combined chapter Markdown.</param>
 /// <param name="HtmlPath">HTML companion.</param>
 /// <param name="TextPath">Plain-text companion.</param>
-/// <param name="PdfPath">QuestPDF output.</param>
+/// <param name="PdfPath">PDF output (Novolis.Documents + Documents.Skia).</param>
 public sealed record BookPrintPaths(
     string MarkdownPath,
     string HtmlPath,
@@ -14,8 +14,7 @@ public sealed record BookPrintPaths(
     string PdfPath);
 
 /// <summary>
-/// Book-folder print export used by CLI orchestration: writes Markdown, HTML, TXT, and PDF
-/// with books-grade QuestPDF fidelity.
+/// Book-folder print export used by CLI orchestration: writes Markdown, HTML, TXT, and PDF.
 /// </summary>
 public static class BookPrintExporter
 {
@@ -77,11 +76,10 @@ public static class BookPrintExporter
         ManuscriptDocumentEmitters.WriteHtml(book.Title, markdown, htmlPath, css, showAll, meta);
         ManuscriptDocumentEmitters.WritePlainText(markdown, txtPath, showAll);
 
-        QuestPdfDocuments.WriteBookPdf(
+        ManuscriptPagedDocumentBuilder.WriteBookPdf(
             markdown,
             pdfPath,
-            new QuestPdfDocuments.BookCoverMeta(book.Title, book.Subtitle, seriesTitle, book.Author, rights),
-            showAll,
+            new ManuscriptPagedDocumentBuilder.BookCoverMeta(book.Title, book.Subtitle, seriesTitle, book.Author, rights),
             settings);
 
         return new BookPrintPaths(
@@ -135,11 +133,10 @@ public static class BookPrintExporter
         ManuscriptDocumentEmitters.WriteHtml(book.Title, markdown, htmlPath, css, showAll, meta);
         ManuscriptDocumentEmitters.WritePlainText(markdown, txtPath, showAll);
 
-        QuestPdfDocuments.WriteBookPdf(
+        ManuscriptPagedDocumentBuilder.WriteBookPdf(
             markdown,
             pdfPath,
-            new QuestPdfDocuments.BookCoverMeta(book.Title, book.Subtitle, seriesTitle, book.Author, rights),
-            showAll,
+            new ManuscriptPagedDocumentBuilder.BookCoverMeta(book.Title, book.Subtitle, seriesTitle, book.Author, rights),
             settings);
 
         return new BookPrintPaths(

@@ -3,13 +3,22 @@
     <PackageId>Novolis.Manuscript.Export.Pdf</PackageId>
     <IsPackable>true</IsPackable>
     <RootNamespace>Novolis.Manuscript.Export.Pdf</RootNamespace>
-    <Description>Manuscript PDF export via QuestPDF with Markdown/HTML/TXT companions.</Description>
+    <Description>Manuscript PDF export via Novolis.Documents + Documents.Skia with Markdown/HTML/TXT companions.</Description>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Markdig" />
-    <PackageReference Include="QuestPDF" />
-    <PackageReference Include="Novolis.Markup.Markdown.Rendering" />
+    <PackageReference Include="Novolis.Documents" />
+    <PackageReference Include="Novolis.Documents.Layout" />
+    <PackageReference Include="Novolis.Documents.Skia" />
+    <PackageReference Include="Novolis.Markup.Markdown" />
+    <PackageReference Include="Novolis.Markup.Markdown.Documents" />
+    <PackageReference Include="Novolis.Math.Measure" />
+    <!-- Explicit: ProjectReference mode substitutes Novolis.Documents.Skia with a sibling ProjectReference,
+         which does not carry its transitive SkiaSharp package dependencies through the NuGet restore graph. -->
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Win32" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
+    <PackageReference Include="SkiaSharp.NativeAssets.macOS" />
     <ProjectReference Include="..\Novolis.Manuscript\Novolis.Manuscript.csproj" />
   </ItemGroup>
   <ItemGroup>

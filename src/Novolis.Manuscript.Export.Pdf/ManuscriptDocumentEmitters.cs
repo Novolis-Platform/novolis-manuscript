@@ -1,10 +1,10 @@
 using System.Net;
 using System.Text;
-using Markdig;
+using Novolis.Markup.Markdown;
 
 namespace Novolis.Manuscript.Export.Pdf;
 
-/// <summary>Companion Markdown / HTML / TXT emitters for print builds.</summary>
+/// <summary>Companion Markdown / HTML / TXT emitters for print builds (Novolis Markdown, not Markdig).</summary>
 internal static class ManuscriptDocumentEmitters
 {
     [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage(Justification = "BOM strip on legacy concat path.")]
@@ -41,8 +41,8 @@ internal static class ManuscriptDocumentEmitters
         bool showAllTags,
         IReadOnlyDictionary<string, string>? meta = null)
     {
-        var bodyHtml = Markdown.ToHtml(markdown, MarkdownRenderPipeline.Instance);
-        bodyHtml = ChapterMetadataHtml.TransformBlockquotes(bodyHtml, showAllTags);
+        var document = MarkdownDocument.Parse(markdown);
+        var bodyHtml = RenderHtmlBody(document, showAllTags);
 
         var sb = new StringBuilder();
         sb.AppendLine("<!DOCTYPE html>");
@@ -57,7 +57,8 @@ internal static class ManuscriptDocumentEmitters
         }
         else
         {
-            sb.AppendLine("  <style>body{font-family:Georgia,serif;max-width:40rem;margin:2rem auto;line-height:1.45;padding:0 1rem}</style>");
+            sb.AppendLine("  <style>body{font-family:Georgia,serif;max-width:40rem;margin:2rem auto;line-height:1.45;padding:0 1rem}"
+                + "blockquote.chapter-metadata{background:#f4f4f4;border:1px solid #999;padding:6px 10px;font-family:Consolas,monospace;font-size:0.85rem}</style>");
         }
 
         if (meta != null)
@@ -81,10 +82,75 @@ internal static class ManuscriptDocumentEmitters
 
     public static void WritePlainText(string markdown, string txtPath, bool showAllTags)
     {
-        var doc = Markdown.Parse(markdown, MarkdownRenderPipeline.Instance);
+        var document = MarkdownDocument.Parse(markdown);
         var sb = new StringBuilder();
-        PlainTextRenderer.AppendDocument(doc, sb, showAllTags);
+        var pending = new List<(string Tag, string Value)>();
+
+        void Flush()
+        {
+            if (pending.Count == 0)
+                return;
+            var visible = ChapterMetadataTagVisibility.FilterForBuild(pending, showAllTags);
+            pending.Clear();
+            if (visible.Count == 0)
+                return;
+            foreach (var line in ChapterMetadataDisplay.BuildPlainLines(visible, showAllTags))
+                sb.AppendLine(line);
+            sb.AppendLine();
+        }
+
+        foreach (var section in document)
+        {
+            if (ChapterMetadataQuote.TryGetRows(section, out var rows))
+            {
+                pending.AddRange(rows);
+                continue;
+            }
+
+            Flush();
+            ManuscriptPlainTextRenderer.AppendSection(section, sb);
+        }
+
+        Flush();
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(txtPath))!);
         File.WriteAllText(txtPath, sb.ToString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+    }
+
+    static string RenderHtmlBody(IMarkdownDocument document, bool showAllTags)
+    {
+        var sb = new StringBuilder();
+        var pending = new List<(string Tag, string Value)>();
+
+        void Flush()
+        {
+            if (pending.Count == 0)
+                return;
+            var visible = ChapterMetadataTagVisibility.FilterForBuild(pending, showAllTags);
+            pending.Clear();
+            if (visible.Count == 0)
+                return;
+            var lines = ChapterMetadataDisplay.BuildPlainLines(visible, showAllTags);
+            if (lines.Count == 0)
+                return;
+            sb.Append("<blockquote class=\"chapter-metadata\">");
+            foreach (var line in lines)
+                sb.Append("<p>").Append(WebUtility.HtmlEncode(line)).Append("</p>");
+            sb.Append("</blockquote>\n");
+        }
+
+        foreach (var section in document)
+        {
+            if (ChapterMetadataQuote.TryGetRows(section, out var rows))
+            {
+                pending.AddRange(rows);
+                continue;
+            }
+
+            Flush();
+            sb.Append(MarkdownToHtmlConverter.Convert(MarkdownDocument.Create(section))).Append('\n');
+        }
+
+        Flush();
+        return sb.ToString();
     }
 }

@@ -3,12 +3,11 @@
     <PackageId>Novolis.Manuscript.Export.Markdown</PackageId>
     <IsPackable>true</IsPackable>
     <RootNamespace>Novolis.Manuscript.Export.Markdown</RootNamespace>
-    <Description>Manuscript Markdown/HTML export via Novolis.Markup.Markdown and Rendering.</Description>
+    <Description>Manuscript Markdown/HTML export via Novolis.Markup.Markdown (Parse + MarkdownToHtmlConverter).</Description>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Novolis.Markup.Markdown" />
-    <PackageReference Include="Novolis.Markup.Markdown.Rendering" />
     <ProjectReference Include="..\Novolis.Manuscript\Novolis.Manuscript.csproj" />
   </ItemGroup>
   <ItemGroup>

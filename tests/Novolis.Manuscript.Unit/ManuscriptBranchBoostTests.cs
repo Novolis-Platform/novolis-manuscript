@@ -1,5 +1,4 @@
 using System.Text;
-using Markdig;
 using Novolis.Manuscript;
 using Novolis.Manuscript.Export.Audio;
 using Novolis.Manuscript.Export.Pdf;
@@ -7,6 +6,7 @@ using Novolis.Manuscript.LegacyBooks;
 using Novolis.Manuscript.Metrics;
 using Novolis.Manuscript.Protocol;
 using Novolis.Manuscript.Protocol.Internal;
+using Novolis.Markup.Markdown;
 using ProtocolWorkspace = Novolis.Manuscript.Protocol.ManuscriptWorkspace;
 
 namespace Novolis.Manuscript.Unit;
@@ -488,13 +488,22 @@ public sealed class ManuscriptBranchBoostTests
             await Assert.That(txt).Contains("Important");
             await Assert.That(File.Exists(paths.PdfPath)).IsTrue();
 
-            // Direct plain-text coverage for null inlines / nested containers
-            var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
-            var doc = Markdown.Parse(markdown, pipeline);
+            // Direct plain-text coverage for fluent link items / nested containers.
+            var doc = MarkdownDocument.Parse(markdown);
             var sb = new StringBuilder();
-            PlainTextRenderer.AppendDocument(doc, sb, showAllTags: true);
+            ManuscriptPlainTextRenderer.AppendDocument(doc, sb);
             await Assert.That(sb.ToString()).Contains("link");
-            await Assert.That(PlainTextRenderer.InlinesToPlain(null)).IsEqualTo("");
+
+            var linkParagraph = new MarkdownParagraph();
+            linkParagraph.WithText("See ");
+            linkParagraph.WithLink("here", "https://example.com");
+            linkParagraph.WithNewLine();
+            linkParagraph.WithText("done.");
+            await Assert.That(ManuscriptPlainTextRenderer.FlattenParagraph(linkParagraph)).IsEqualTo("See here done.");
+
+            var danglingLink = new MarkdownParagraph();
+            danglingLink.WithLink("only", "https://example.com");
+            await Assert.That(ManuscriptPlainTextRenderer.FlattenParagraph(danglingLink)).IsEqualTo("only");
         }
         finally
         {

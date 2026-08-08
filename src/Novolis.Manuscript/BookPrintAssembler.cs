@@ -110,9 +110,9 @@ public static class BookPrintAssembler
         else if (!string.IsNullOrWhiteSpace(chapter.Title))
             sb.AppendLine("# " + chapter.Title.Trim());
 
-        // Always emit public fields as [!tag] callouts so Markdig keeps a QuoteBlock that
-        // PDF/HTML/TXT can recognize as chapter-metadata. Plain consecutive lines (former
-        // reader path) collapse to one paragraph; soft line breaks become spaces in PDF.
+        // Always emit public fields as [!tag] callouts so the Novolis Markdown parser keeps a
+        // quote/alert section that PDF/HTML/TXT can recognize as chapter-metadata. Plain consecutive
+        // lines (former reader path) collapse to one paragraph; soft line breaks become spaces in PDF.
         foreach (var (tag, value) in chapter.PublicFields)
         {
             if (!string.IsNullOrWhiteSpace(value))

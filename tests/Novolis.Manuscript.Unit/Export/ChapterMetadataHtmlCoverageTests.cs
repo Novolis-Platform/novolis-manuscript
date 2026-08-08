@@ -39,7 +39,7 @@ public sealed class ChapterMetadataHtmlCoverageTests
             var readerHtml = await File.ReadAllTextAsync(htmlPath);
             await Assert.That(readerHtml).DoesNotContain("debug-mode");
 
-            // Multi-tag single paragraph (Markdig may merge).
+            // Multi-tag single line.
             var multi = "> [!date] 1 [!time] 2 [!location] L\n\n# H\n\nB\n";
             ManuscriptDocumentEmitters.WriteHtml("T", multi, htmlPath, null, showAllTags: false);
             var multiHtml = await File.ReadAllTextAsync(htmlPath);
@@ -82,8 +82,6 @@ public sealed class ChapterMetadataHtmlCoverageTests
         s.BodyFontSizePt = 12;
         await Assert.That(s.BodyFontFamily).IsEqualTo("Times New Roman");
         await Assert.That(s.BodyFontSize).IsEqualTo(12);
-        var opts = s.ToPdfOptions("t", "s", "a");
-        await Assert.That(opts.Title).IsEqualTo("t");
         var path = Path.Combine(Path.GetTempPath(), $"ps-{Guid.NewGuid():N}.json");
         try
         {

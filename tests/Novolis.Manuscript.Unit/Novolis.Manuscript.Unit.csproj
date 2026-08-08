@@ -8,12 +8,10 @@
   </PropertyGroup>
     <ItemGroup>
     <PackageReference Include="JetBrains.Annotations" />
-    <PackageReference Include="Markdig" />
     <PackageReference Include="Novolis.Audio.Voice.EdgeTts" />
     <PackageReference Include="Novolis.IO.Indexing" />
     <PackageReference Include="Novolis.IO.Recovery" />
-    <PackageReference Include="Novolis.Markup.Markdown.Rendering" />
-    <PackageReference Include="QuestPDF" />
+    <PackageReference Include="Novolis.Markup.Markdown" />
     <PackageReference Include="TUnit" />
   </ItemGroup>
   <ItemGroup>

@@ -298,7 +298,7 @@ public static class ManuscriptMetadata
 
     static void ApplyCalloutLine(ManuscriptChapterMetadata meta, string firstTag, string remainder)
     {
-        // Markdig / authors often put several [!tag] values on one callout line.
+        // Authors often put several [!tag] values on one callout line.
         var combined = $"[!{firstTag}] {remainder}";
         var parts = SplitInlineTags(combined);
         if (parts.Count == 0)

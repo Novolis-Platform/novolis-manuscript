@@ -1,6 +1,6 @@
 # Novolis.Manuscript.Export.Pdf
 
-QuestPDF book and reference export for manuscripts (cover, H1 page breaks, chapter-metadata filtering), plus Markdown/HTML/TXT companions.
+Book and reference PDF export for manuscripts via `Novolis.Documents` + `Novolis.Documents.Skia` (cover, chapter headers, chapter-metadata filtering), plus Markdown/HTML/TXT companions via `Novolis.Markup.Markdown` (no Markdig, no QuestPDF).
 
 ## Install
 

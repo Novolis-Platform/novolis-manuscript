@@ -1,6 +1,6 @@
 # Novolis.Manuscript.Export.Markdown
 
-Exports manuscript books to reader/author Markdown and HTML using `Novolis.Markup.Markdown` + `Novolis.Markup.Markdown.Rendering`.
+Exports manuscript books to reader/author Markdown and HTML using `Novolis.Markup.Markdown` (`Parse` + `MarkdownToHtmlConverter`), no Markdig.
 
 ```csharp
 var paths = ManuscriptMarkdownExporter.ExportBook(book, outputDir);
