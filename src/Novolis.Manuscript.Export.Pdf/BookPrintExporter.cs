@@ -175,7 +175,8 @@ public static class BookPrintExporter
         var yaml = BookYaml.LoadFile(Path.Combine(bookDirectory, "book.yaml"));
         var title = BookYaml.GetString(yaml, "title") ?? bookId;
         var subtitle = BookYaml.GetString(yaml, "subtitle");
-        var author = BookYaml.GetString(yaml, "author");
+        // Prefer singular author; NMP books often use authors: [ ... ] only.
+        var author = BookYaml.GetString(yaml, "author") ?? FirstAuthor(yaml);
         var debugMode = BookYaml.GetBool(yaml, "debug_mode");
 
         var chapters = new List<ChapterInfo>();
@@ -265,5 +266,15 @@ public static class BookPrintExporter
         }
 
         return null;
+    }
+
+    static string? FirstAuthor(Dictionary<string, object?> yaml)
+    {
+        if (!yaml.TryGetValue("authors", out var raw) || raw is null)
+            return null;
+        if (raw is System.Collections.IList list && list.Count > 0)
+            return list[0]?.ToString()?.Trim();
+        var s = raw.ToString()?.Trim();
+        return string.IsNullOrWhiteSpace(s) ? null : s;
     }
 }
