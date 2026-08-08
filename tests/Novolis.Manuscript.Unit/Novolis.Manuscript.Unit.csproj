@@ -22,6 +22,7 @@
     <ProjectReference Include="..\..\src\Novolis.Manuscript.Export.Audio\Novolis.Manuscript.Export.Audio.csproj" />
     <ProjectReference Include="..\..\src\Novolis.Manuscript.IO\Novolis.Manuscript.IO.csproj" />
     <ProjectReference Include="..\..\src\Novolis.Manuscript.Metrics\Novolis.Manuscript.Metrics.csproj" />
+    <ProjectReference Include="..\..\src\Novolis.Manuscript.Editorial\Novolis.Manuscript.Editorial.csproj" />
     <ProjectReference Include="..\..\src\Novolis.Avalonia.Manuscript\Novolis.Avalonia.Manuscript.csproj" />
   </ItemGroup>
 </Project>

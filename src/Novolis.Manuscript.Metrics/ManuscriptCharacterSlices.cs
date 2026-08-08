@@ -118,6 +118,35 @@ public sealed class CharacterSliceReport
         return sb.ToString();
     }
 
+    /// <summary>Serializes a compact JSON summary of the report.</summary>
+    public string ToJson(string? characterFilter = null)
+    {
+        IEnumerable<KeyValuePair<string, CharacterSlice>> slices = Characters
+            .OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase);
+        if (!string.IsNullOrWhiteSpace(characterFilter))
+        {
+            if (!Characters.TryGetValue(characterFilter.Trim(), out var match))
+                throw new InvalidOperationException($"Character not found in metadata: {characterFilter}");
+            slices = [new KeyValuePair<string, CharacterSlice>(characterFilter.Trim(), match)];
+        }
+
+        var payload = new
+        {
+            label = Label,
+            chaptersDir = ChaptersDir,
+            chapterCount = Chapters.Count,
+            missingPov = MissingPov.Count,
+            missingCharacters = MissingCharacters.Count,
+            characters = slices.Select(kv => new
+            {
+                name = kv.Key,
+                pov = kv.Value.Pov.Count,
+                cast = kv.Value.Characters.Count,
+            }),
+        };
+        return System.Text.Json.JsonSerializer.Serialize(payload, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+    }
+
     static string FmtNum(CharacterSliceChapter ch) =>
         ch.Number?.ToString(CultureInfo.InvariantCulture) ?? "?";
 }
@@ -156,6 +185,20 @@ public static class ManuscriptCharacterSlices
             MissingCharacters = chapters.Where(c => string.IsNullOrWhiteSpace(c.CharactersRaw)).ToList(),
             Characters = allCharacters,
         };
+    }
+
+    /// <summary>Builds a report for a loaded book.</summary>
+    public static CharacterSliceReport Build(BookInfo book)
+    {
+        ArgumentNullException.ThrowIfNull(book);
+        return Build(book.Id, ManuscriptPaths.ResolveChaptersDirectory(book));
+    }
+
+    /// <summary>Builds a report from workspace + series/book ids.</summary>
+    public static CharacterSliceReport BuildFromWorkspace(string workspaceRoot, string? seriesId, string bookId)
+    {
+        var (book, _) = ManuscriptPaths.ResolveBookChapters(workspaceRoot, seriesId, bookId);
+        return Build(book);
     }
 
     /// <summary>Scans chapters and returns chapter rows (no aggregation).</summary>

@@ -147,6 +147,60 @@ public static class ManuscriptAscii
         return rows;
     }
 
+    /// <summary>Scans every <c>*.md</c> in a chapters directory for non-ASCII issues.</summary>
+    public static IReadOnlyList<AsciiIssue> ScanChaptersDirectory(string chaptersDir, int limit = 100)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(chaptersDir);
+        if (!Directory.Exists(chaptersDir))
+            throw new DirectoryNotFoundException(chaptersDir);
+
+        var issues = new List<AsciiIssue>();
+        foreach (var file in Directory.GetFiles(chaptersDir, "*.md", SearchOption.TopDirectoryOnly)
+                     .OrderBy(f => f, StringComparer.OrdinalIgnoreCase))
+        {
+            var remaining = limit - issues.Count;
+            if (remaining <= 0)
+                break;
+            issues.AddRange(Scan(File.ReadAllText(file), Path.GetFileName(file), remaining));
+        }
+
+        return issues;
+    }
+
+    /// <summary>Scans a book resolved from a workspace.</summary>
+    public static IReadOnlyList<AsciiIssue> ScanBook(
+        string workspaceRoot,
+        string? seriesId,
+        string bookId,
+        int limit = 100)
+    {
+        var (_, chapters) = ManuscriptPaths.ResolveBookChapters(workspaceRoot, seriesId, bookId);
+        return ScanChaptersDirectory(chapters, limit);
+    }
+
+    /// <summary>Scans chapters for a loaded <see cref="BookInfo"/>.</summary>
+    public static IReadOnlyList<AsciiIssue> ScanBook(BookInfo book, int limit = 100) =>
+        ScanChaptersDirectory(ManuscriptPaths.ResolveChaptersDirectory(book), limit);
+
+    /// <summary>Normalizes every chapter in a book resolved from a workspace.</summary>
+    public static IReadOnlyList<(string Path, AsciiNormalizeResult Result)> NormalizeBook(
+        string workspaceRoot,
+        string? seriesId,
+        string bookId,
+        bool dryRun,
+        bool relax)
+    {
+        var (_, chapters) = ManuscriptPaths.ResolveBookChapters(workspaceRoot, seriesId, bookId);
+        return NormalizeChaptersDirectory(chapters, dryRun, relax);
+    }
+
+    /// <summary>Normalizes chapters for a loaded <see cref="BookInfo"/>.</summary>
+    public static IReadOnlyList<(string Path, AsciiNormalizeResult Result)> NormalizeBook(
+        BookInfo book,
+        bool dryRun,
+        bool relax) =>
+        NormalizeChaptersDirectory(ManuscriptPaths.ResolveChaptersDirectory(book), dryRun, relax);
+
     static IReadOnlyList<AsciiIssue> FindNonAscii(string text, string path, int limit)
     {
         var issues = new List<AsciiIssue>();

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageId>Novolis.Manuscript.Editorial</PackageId>
+    <IsPackable>true</IsPackable>
+    <RootNamespace>Novolis.Manuscript.Editorial</RootNamespace>
+    <Description>Deterministic manuscript editorial detectors: lexicon, AI-slop patterns, and naming variants.</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Novolis.Manuscript\Novolis.Manuscript.csproj" />
+  </ItemGroup>
+</Project>

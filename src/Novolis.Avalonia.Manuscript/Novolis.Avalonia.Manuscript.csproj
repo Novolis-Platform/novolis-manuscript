@@ -3,7 +3,7 @@
     <PackageId>Novolis.Avalonia.Manuscript</PackageId>
     <IsPackable>true</IsPackable>
     <RootNamespace>Novolis.Avalonia.Manuscript</RootNamespace>
-    <Description>Shared Avalonia chrome helpers for manuscript editors.</Description>
+    <Description>Composable Avalonia chrome panels for manuscript editors (not a product host).</Description>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>

@@ -48,7 +48,7 @@ public sealed class BookMetricsDto
     public IReadOnlyList<ChapterMetricRow> Chapters { get; init; } = [];
 }
 
-/// <summary>Computes and writes manuscript metrics for NMP book trees.</summary>
+/// <summary>Computes manuscript metrics (pure) and optional disk reporters.</summary>
 public static class ManuscriptMetrics
 {
     const double WordsPerHour = 9300.0;
@@ -64,8 +64,8 @@ public static class ManuscriptMetrics
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
-    /// <summary>Runs metrics for every buildable book under a workspace root.</summary>
-    public static IReadOnlyList<BookMetricsDto> RunAll(string workspaceRoot)
+    /// <summary>Computes metrics for every buildable book (no disk writes).</summary>
+    public static IReadOnlyList<BookMetricsDto> ComputeAll(string workspaceRoot)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(workspaceRoot);
         if (!ManuscriptWorkspace.TryOpen(workspaceRoot, out var ws) || ws is null)
@@ -75,18 +75,17 @@ public static class ManuscriptMetrics
         foreach (var series in ws.Catalog.Load(ws.ContentRoot))
         {
             foreach (var book in series.Books)
-                results.Add(RunBook(ws.ContentRoot, series.Id, book));
+                results.Add(ComputeBook(series.Id, book));
         }
 
         foreach (var book in ws.Catalog.LoadStandaloneBooks(ws.ContentRoot))
-            results.Add(RunBook(ws.ContentRoot, "books", book));
+            results.Add(ComputeBook("books", book));
 
-        WriteOverview(ws.ContentRoot, results);
         return results;
     }
 
-    /// <summary>Runs metrics for one book by series/book ids.</summary>
-    public static BookMetricsDto RunOne(string workspaceRoot, string seriesId, string bookId)
+    /// <summary>Computes metrics for one book (no disk writes).</summary>
+    public static BookMetricsDto ComputeOne(string workspaceRoot, string seriesId, string bookId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(workspaceRoot);
         ArgumentException.ThrowIfNullOrWhiteSpace(bookId);
@@ -95,24 +94,13 @@ public static class ManuscriptMetrics
 
         var book = ws.Catalog.FindBook(ws.ContentRoot, seriesId, bookId)
                    ?? throw new FileNotFoundException($"Book not found: {seriesId}/{bookId}");
-        var dto = RunBook(ws.ContentRoot, string.IsNullOrWhiteSpace(seriesId) ? "books" : seriesId, book);
-        return dto;
+        return ComputeBook(string.IsNullOrWhiteSpace(seriesId) ? "books" : seriesId, book);
     }
 
-    /// <summary>Counts approximate prose words in markdown.</summary>
-    public static int GetWordCount(string markdown)
+    /// <summary>Computes metrics for a loaded book (no disk writes).</summary>
+    public static BookMetricsDto ComputeBook(string seriesId, BookInfo book)
     {
-        if (string.IsNullOrWhiteSpace(markdown))
-            return 0;
-        var text = FencedCode.Replace(markdown, " ");
-        text = ImageMd.Replace(text, " ");
-        text = LinkMd.Replace(text, " $1 ");
-        text = MdNoise.Replace(text, " ");
-        return WordLike.Matches(text).Count;
-    }
-
-    static BookMetricsDto RunBook(string workspaceRoot, string seriesId, BookInfo book)
-    {
+        ArgumentNullException.ThrowIfNull(book);
         var yaml = BookYaml.LoadFile(Path.Combine(book.DirectoryPath, "book.yaml"));
         var target = TryTargetWords(yaml);
         var chapters = new List<ChapterMetricRow>();
@@ -135,7 +123,7 @@ public static class ManuscriptMetrics
             });
         }
 
-        var dto = new BookMetricsDto
+        return new BookMetricsDto
         {
             Series = seriesId,
             Book = book.Id,
@@ -146,16 +134,76 @@ public static class ManuscriptMetrics
             EstimatedHours = totalWords / WordsPerHour,
             Chapters = chapters,
         };
+    }
 
-        var outDir = ResolveOutMetricsDir(workspaceRoot, seriesId, book.Id);
+    /// <summary>Computes all books and writes <c>out/</c> reports (CLI/CI path).</summary>
+    public static IReadOnlyList<BookMetricsDto> RunAll(string workspaceRoot)
+    {
+        var results = ComputeAll(workspaceRoot);
+        WriteAllReports(workspaceRoot, results);
+        return results;
+    }
+
+    /// <summary>Computes one book and writes <c>out/</c> reports (CLI/CI path).</summary>
+    public static BookMetricsDto RunOne(string workspaceRoot, string seriesId, string bookId)
+    {
+        var dto = ComputeOne(workspaceRoot, seriesId, bookId);
+        WriteBookReports(workspaceRoot, dto);
+        return dto;
+    }
+
+    /// <summary>Writes per-book JSON/MD under <c>out/</c> and an overview when multiple.</summary>
+    public static void WriteAllReports(string workspaceRoot, IReadOnlyList<BookMetricsDto> results)
+    {
+        foreach (var dto in results)
+            WriteBookReports(workspaceRoot, dto);
+        WriteOverview(workspaceRoot, results);
+    }
+
+    /// <summary>Writes one book's metrics JSON/MD under <c>out/</c>.</summary>
+    public static void WriteBookReports(string workspaceRoot, BookMetricsDto dto)
+    {
+        ArgumentNullException.ThrowIfNull(dto);
+        var outDir = ResolveOutMetricsDir(workspaceRoot, dto.Series, dto.Book);
         Directory.CreateDirectory(outDir);
-        var jsonPath = Path.Combine(outDir, $"{book.Id}.metrics.json");
-        var mdPath = Path.Combine(outDir, $"{book.Id}.metrics.md");
+        var jsonPath = Path.Combine(outDir, $"{dto.Book}.metrics.json");
+        var mdPath = Path.Combine(outDir, $"{dto.Book}.metrics.md");
         File.WriteAllText(jsonPath, JsonSerializer.Serialize(dto, JsonOptions));
         File.WriteAllText(mdPath, FormatMarkdown(dto));
-        Console.WriteLine($"Metrics: {jsonPath}");
-        Console.WriteLine($"Summary: {mdPath}");
-        return dto;
+    }
+
+    /// <summary>Counts approximate prose words in markdown.</summary>
+    public static int GetWordCount(string markdown)
+    {
+        if (string.IsNullOrWhiteSpace(markdown))
+            return 0;
+        var text = FencedCode.Replace(markdown, " ");
+        text = ImageMd.Replace(text, " ");
+        text = LinkMd.Replace(text, " $1 ");
+        text = MdNoise.Replace(text, " ");
+        return WordLike.Matches(text).Count;
+    }
+
+    /// <summary>Formats a book metrics DTO as Markdown.</summary>
+    public static string FormatMarkdown(BookMetricsDto dto)
+    {
+        ArgumentNullException.ThrowIfNull(dto);
+        var sb = new StringBuilder();
+        sb.AppendLine(CultureInfo.InvariantCulture, $"# Metrics — {dto.Title ?? dto.Book}");
+        sb.AppendLine();
+        sb.AppendLine(CultureInfo.InvariantCulture, $"- Series: `{dto.Series}`");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"- Book: `{dto.Book}`");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"- Words: {dto.TotalWords}");
+        if (dto.TargetWords is int t)
+            sb.AppendLine(CultureInfo.InvariantCulture, $"- Target words: {t}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"- TODO/FIXME/TK: {dto.TotalTodos}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"- Estimated hours: {dto.EstimatedHours:0.00}");
+        sb.AppendLine();
+        sb.AppendLine("| Chapter | Words | Todos |");
+        sb.AppendLine("|---|---:|---:|");
+        foreach (var c in dto.Chapters)
+            sb.AppendLine(CultureInfo.InvariantCulture, $"| {c.File} | {c.Words} | {c.Todos} |");
+        return sb.ToString();
     }
 
     static void WriteOverview(string workspaceRoot, IReadOnlyList<BookMetricsDto> results)
@@ -175,27 +223,6 @@ public static class ManuscriptMetrics
         }
 
         File.WriteAllText(path, sb.ToString());
-        Console.WriteLine($"Aggregated metrics overview: {path}");
-    }
-
-    static string FormatMarkdown(BookMetricsDto dto)
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine(CultureInfo.InvariantCulture, $"# Metrics — {dto.Title ?? dto.Book}");
-        sb.AppendLine();
-        sb.AppendLine(CultureInfo.InvariantCulture, $"- Series: `{dto.Series}`");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"- Book: `{dto.Book}`");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"- Words: {dto.TotalWords}");
-        if (dto.TargetWords is int t)
-            sb.AppendLine(CultureInfo.InvariantCulture, $"- Target words: {t}");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"- TODO/FIXME/TK: {dto.TotalTodos}");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"- Estimated hours: {dto.EstimatedHours:0.00}");
-        sb.AppendLine();
-        sb.AppendLine("| Chapter | Words | Todos |");
-        sb.AppendLine("|---|---:|---:|");
-        foreach (var c in dto.Chapters)
-            sb.AppendLine(CultureInfo.InvariantCulture, $"| {c.File} | {c.Words} | {c.Todos} |");
-        return sb.ToString();
     }
 
     static string ResolveOutMetricsDir(string workspaceRoot, string seriesId, string bookId) =>

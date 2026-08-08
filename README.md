@@ -42,8 +42,11 @@ Packable Manuscript framework for Books Writer Studio and Books Mobile.
 | `Novolis.Manuscript.Protocol` | NMP/1 reader |
 | `Novolis.Manuscript.LegacyBooks` | Legacy `content/` adapter |
 | `Novolis.Manuscript.IO` | Tree surgery, working copies, git/GitHub façades |
+| `Novolis.Manuscript.Metrics` | Word counts, character slices, metadata TK debt |
+| `Novolis.Manuscript.Editorial` | Lexicon, AI-slop patterns, naming variants |
 | `Novolis.Manuscript.Export.Pdf` | PDF export |
 | `Novolis.Manuscript.Export.Audio` | TTS / audiobook |
+| `Novolis.Manuscript.Cli` | `novolis-manuscript` tool |
 | `Novolis.Avalonia.Manuscript` | Shared editor chrome |
 
 ## Build

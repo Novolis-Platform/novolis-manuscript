@@ -6,7 +6,7 @@
     <PackageId>Novolis.Manuscript.Cli</PackageId>
     <IsPackable>true</IsPackable>
     <RootNamespace>Novolis.Manuscript.Cli</RootNamespace>
-    <Description>CLI for manuscript book surgery, audiobook generation, print, and metrics.</Description>
+    <Description>CLI for manuscript book surgery, audiobook generation, print, metrics, and editorial lint.</Description>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
@@ -16,6 +16,7 @@
     <ProjectReference Include="..\Novolis.Manuscript.Export.Audio\Novolis.Manuscript.Export.Audio.csproj" />
     <ProjectReference Include="..\Novolis.Manuscript.Export.Pdf\Novolis.Manuscript.Export.Pdf.csproj" />
     <ProjectReference Include="..\Novolis.Manuscript.Metrics\Novolis.Manuscript.Metrics.csproj" />
+    <ProjectReference Include="..\Novolis.Manuscript.Editorial\Novolis.Manuscript.Editorial.csproj" />
     <PackageReference Include="Novolis.Audio.Voice.EdgeTts" />
     <PackageReference Include="Novolis.IO.Paths" />
   </ItemGroup>

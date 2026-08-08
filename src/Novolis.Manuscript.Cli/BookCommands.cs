@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using Novolis.IO.Paths;
 using Novolis.Manuscript;
+using Novolis.Manuscript.Editorial;
 using Novolis.Manuscript.IO;
 using Novolis.Manuscript.Metrics;
 
@@ -36,6 +37,7 @@ static class BookCommands
             "ascii-scan" => AsciiScan(root, opts),
             "ascii-normalize" => AsciiNormalize(root, opts),
             "character-slices" => CharacterSlices(root, opts),
+            "editorial" => Editorial(root, opts),
             _ => throw new InvalidOperationException($"Unknown book command: {command}"),
         };
         return result;
@@ -232,26 +234,16 @@ static class BookCommands
         if (!ManuscriptWorkspace.TryOpen(root, out var ws) || ws is null)
             throw new InvalidOperationException($"Not a manuscript workspace: {root}");
         var book = ResolveBook(ws, opts);
-        var chaptersDir = ResolveChaptersDir(book.DirectoryPath);
-        var issues = new List<object>();
-        foreach (var file in Directory.GetFiles(chaptersDir, "*.md"))
-        {
-            var found = ManuscriptAscii.Scan(File.ReadAllText(file), Path.GetFileName(file), limit: 100 - issues.Count);
-            foreach (var issue in found)
+        var issues = ManuscriptAscii.ScanBook(book)
+            .Select(issue => new
             {
-                issues.Add(new
-                {
-                    file = issue.Path,
-                    line = issue.Line,
-                    column = issue.Column,
-                    index = issue.Index,
-                    codepoint = $"U+{issue.Codepoint:X4}",
-                });
-            }
-
-            if (issues.Count >= 100)
-                break;
-        }
+                file = issue.Path,
+                line = issue.Line,
+                column = issue.Column,
+                index = issue.Index,
+                codepoint = $"U+{issue.Codepoint:X4}",
+            })
+            .ToList();
 
         WritePayload(issues.Count == 0, "ascii-scan",
             issues.Count == 0 ? "ASCII OK." : $"{issues.Count} issue(s).",
@@ -316,8 +308,7 @@ static class BookCommands
         if (!ManuscriptWorkspace.TryOpen(root, out var ws) || ws is null)
             throw new InvalidOperationException($"Not a manuscript workspace: {root}");
         var book = ResolveBook(ws, opts);
-        var chaptersDir = ResolveChaptersDir(book.DirectoryPath);
-        var report = ManuscriptCharacterSlices.Build(book.Id, chaptersDir);
+        var report = ManuscriptCharacterSlices.Build(book);
         var markdown = report.ToMarkdown(opts.Character);
         if (!string.IsNullOrWhiteSpace(opts.OutPath))
         {
@@ -350,6 +341,37 @@ static class BookCommands
         }
 
         return 0;
+    }
+
+    static int Editorial(string root, BookCliOptions opts)
+    {
+        if (!ManuscriptWorkspace.TryOpen(root, out var ws) || ws is null)
+            throw new InvalidOperationException($"Not a manuscript workspace: {root}");
+
+        var book = ResolveBook(ws, opts);
+        var chaptersDir = ResolveChaptersDir(book.DirectoryPath);
+        var editorialOpts = new EditorialOptions
+        {
+            Profile = opts.EditorialProfile,
+            EnableLexicon = opts.EnableLexicon,
+            EnableSlop = opts.EnableSlop,
+            EnableNaming = opts.EnableNaming,
+        };
+        var findings = EditorialAnalyzer.AnalyzeChaptersDir(chaptersDir, editorialOpts)
+            .Concat(ManuscriptMetadataDebt.Diagnose(chaptersDir))
+            .ToList();
+
+        var warnings = findings.Count(f => f.Severity == DiagnosticSeverity.Warning);
+        var errors = findings.Count(f => f.Severity == DiagnosticSeverity.Error);
+        WritePayload(
+            ok: errors == 0,
+            "editorial",
+            errors == 0
+                ? (findings.Count == 0 ? "Editorial clean." : $"{findings.Count} finding(s), {warnings} warning(s).")
+                : $"{errors} error(s).",
+            findings.Select(f => new { severity = f.Severity.ToString(), code = f.Code, message = f.Message, path = f.Path }),
+            opts.Json);
+        return errors == 0 ? 0 : 1;
     }
 
     static List<string> ResolveAsciiTargets(string root, BookCliOptions opts)
@@ -407,17 +429,8 @@ static class BookCommands
     static BookInfo LoadBookFallback(string bookDir, string? seriesId) =>
         ManuscriptCatalog.LoadBookDirectory(bookDir, seriesId);
 
-    static string ResolveChaptersDir(string bookDir)
-    {
-        foreach (var name in new[] { "Chapters", "chapters" })
-        {
-            var path = Path.Combine(bookDir, name);
-            if (Directory.Exists(path))
-                return path;
-        }
-
-        throw new DirectoryNotFoundException($"Chapters directory not found under {bookDir}");
-    }
+    static string ResolveChaptersDir(string bookDir) =>
+        ManuscriptPaths.ResolveChaptersDirectory(bookDir);
 
     static string ResolveWorkspace(string? start)
     {
@@ -470,6 +483,9 @@ static class BookCommands
               ascii-scan
               ascii-normalize [--dry-run|--apply] [--relax] [--series/--book | paths...]
               character-slices [--character NAME] [-o PATH]
+              editorial [--series/--book | -b PATH]
+                        [--profile fiction|nonfiction]
+                        [--lexicon|--no-lexicon] [--slop|--no-slop] [--naming|--no-naming]
 
             Book selection:
               -b, --book-file PATH
@@ -498,6 +514,10 @@ sealed class BookCliOptions
     public bool DryRun { get; init; }
     public bool Relax { get; init; }
     public bool Json { get; init; }
+    public EditorialProfile EditorialProfile { get; init; } = EditorialProfile.Fiction;
+    public bool? EnableLexicon { get; init; }
+    public bool EnableSlop { get; init; } = true;
+    public bool EnableNaming { get; init; } = true;
     public IReadOnlyList<string> Paths { get; init; } = [];
 
     public static BookCliOptions Parse(string[] args)
@@ -509,6 +529,10 @@ sealed class BookCliOptions
         var dry = false;
         var relax = false;
         var json = false;
+        var profile = EditorialProfile.Fiction;
+        bool? enableLexicon = null;
+        var enableSlop = true;
+        var enableNaming = true;
         var paths = new List<string>();
         for (var i = 0; i < args.Length; i++)
         {
@@ -567,6 +591,27 @@ sealed class BookCliOptions
                 case "--json":
                     json = true;
                     break;
+                case "--profile":
+                    profile = ParseEditorialProfile(Need());
+                    break;
+                case "--lexicon":
+                    enableLexicon = true;
+                    break;
+                case "--no-lexicon":
+                    enableLexicon = false;
+                    break;
+                case "--slop":
+                    enableSlop = true;
+                    break;
+                case "--no-slop":
+                    enableSlop = false;
+                    break;
+                case "--naming":
+                    enableNaming = true;
+                    break;
+                case "--no-naming":
+                    enableNaming = false;
+                    break;
                 default:
                     if (a.StartsWith('-'))
                         throw new InvalidOperationException($"Unknown option: {a}");
@@ -593,7 +638,19 @@ sealed class BookCliOptions
             DryRun = dry,
             Relax = relax,
             Json = json,
+            EditorialProfile = profile,
+            EnableLexicon = enableLexicon,
+            EnableSlop = enableSlop,
+            EnableNaming = enableNaming,
             Paths = paths,
         };
     }
+
+    static EditorialProfile ParseEditorialProfile(string value) =>
+        value.Trim().ToLowerInvariant() switch
+        {
+            "fiction" => EditorialProfile.Fiction,
+            "nonfiction" => EditorialProfile.Nonfiction,
+            _ => throw new InvalidOperationException("editorial --profile must be fiction or nonfiction."),
+        };
 }

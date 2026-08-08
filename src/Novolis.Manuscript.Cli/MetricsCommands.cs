@@ -25,9 +25,15 @@ static class MetricsCommands
             throw new InvalidOperationException("Not a manuscript workspace.");
 
         if (!string.IsNullOrWhiteSpace(opts.Book))
-            ManuscriptMetrics.RunOne(ws.ContentRoot, opts.Series ?? "books", opts.Book);
+        {
+            var dto = ManuscriptMetrics.RunOne(ws.ContentRoot, opts.Series ?? "books", opts.Book);
+            Console.WriteLine($"Metrics: {dto.Series}/{dto.Book} words={dto.TotalWords} todos={dto.TotalTodos}");
+        }
         else
-            ManuscriptMetrics.RunAll(ws.ContentRoot);
+        {
+            var all = ManuscriptMetrics.RunAll(ws.ContentRoot);
+            Console.WriteLine($"Metrics: {all.Count} book(s); overview under out/metrics/");
+        }
 
         return 0;
     }
