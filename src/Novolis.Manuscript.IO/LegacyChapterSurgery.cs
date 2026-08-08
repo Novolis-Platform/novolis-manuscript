@@ -26,7 +26,7 @@ public sealed class ChapterMutationResult
 }
 
 /// <summary>
-/// Insert / promote / sync operations against legacy <c>content/</c> chapter layouts (Calypso / books today).
+/// Insert / promote / sync operations against chapter folders (<c>Chapters/</c> NMP/1 or legacy <c>chapters/</c>).
 /// Ported from the books repo <c>book-tool</c>.
 /// </summary>
 public static class LegacyChapterSurgery

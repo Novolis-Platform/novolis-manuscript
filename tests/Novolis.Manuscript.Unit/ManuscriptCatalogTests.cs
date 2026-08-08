@@ -79,7 +79,9 @@ public sealed class ManuscriptCatalogTests
             var book = new ManuscriptCatalog().FindBook(root, "demo", "book-one")!;
             ManuscriptBookPdfExporter.ExportBook(book, pdf, new ManuscriptPrintSettings { IncludeCover = true });
             await Assert.That(File.Exists(pdf)).IsTrue();
-            var header = File.ReadAllBytes(pdf).Take(4).ToArray();
+            var bytes = File.ReadAllBytes(pdf);
+            await Assert.That(bytes.Length).IsGreaterThan(100);
+            var header = bytes.Take(4).ToArray();
             await Assert.That(System.Text.Encoding.ASCII.GetString(header)).IsEqualTo("%PDF");
         }
         finally
@@ -87,6 +89,29 @@ public sealed class ManuscriptCatalogTests
             Directory.Delete(root, recursive: true);
             if (File.Exists(pdf))
                 File.Delete(pdf);
+        }
+    }
+
+    [Test]
+    public async Task ExportBookFolder_WritesCompanionsAndPdf()
+    {
+        var root = CreateFixture();
+        var outDir = Path.Combine(Path.GetTempPath(), $"ms-print-{Guid.NewGuid():N}");
+        try
+        {
+            var bookDir = Path.Combine(root, "content", "series", "demo", "books", "book-one");
+            var paths = BookPrintExporter.ExportBookFolder(bookDir, outDir, "demo", "book-one");
+            await Assert.That(File.Exists(paths.MarkdownPath)).IsTrue();
+            await Assert.That(File.Exists(paths.HtmlPath)).IsTrue();
+            await Assert.That(File.Exists(paths.TextPath)).IsTrue();
+            await Assert.That(File.Exists(paths.PdfPath)).IsTrue();
+            await Assert.That(new FileInfo(paths.PdfPath).Length).IsGreaterThan(100);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+            if (Directory.Exists(outDir))
+                Directory.Delete(outDir, recursive: true);
         }
     }
 

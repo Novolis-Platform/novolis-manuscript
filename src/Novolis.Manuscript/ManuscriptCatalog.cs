@@ -186,6 +186,17 @@ public sealed class ManuscriptCatalog
         return null;
     }
 
+    /// <summary>Loads a single book directory into <see cref="BookInfo"/>.</summary>
+    public static BookInfo LoadBookDirectory(string bookDirectory, string? seriesId = null, bool? protocolLayout = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(bookDirectory);
+        var protocol = protocolLayout
+                       ?? (File.Exists(Path.Combine(bookDirectory, "book.yaml"))
+                           && (Directory.Exists(Path.Combine(bookDirectory, "Chapters"))
+                               || Directory.Exists(Path.Combine(bookDirectory, "chapters"))));
+        return LoadBook(bookDirectory, seriesId, protocol);
+    }
+
     internal static BookInfo LoadBook(string bookDirectory, string? seriesId, bool protocolLayout)
     {
         var bookYaml = BookYaml.LoadFile(Path.Combine(bookDirectory, "book.yaml"));

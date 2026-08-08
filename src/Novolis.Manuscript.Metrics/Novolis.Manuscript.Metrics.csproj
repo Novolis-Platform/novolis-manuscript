@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageId>Novolis.Manuscript.Metrics</PackageId>
+    <IsPackable>true</IsPackable>
+    <RootNamespace>Novolis.Manuscript.Metrics</RootNamespace>
+    <Description>Manuscript word-count and TODO/FIXME/TK metrics for NMP book trees.</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Novolis.Manuscript\Novolis.Manuscript.csproj" />
+    <PackageReference Include="YamlDotNet" />
+  </ItemGroup>
+</Project>
