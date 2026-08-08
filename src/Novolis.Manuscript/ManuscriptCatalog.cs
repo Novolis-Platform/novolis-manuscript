@@ -1,37 +1,43 @@
 namespace Novolis.Manuscript;
 
-/// <summary>Loads series/book/chapter catalogs from a content root.</summary>
+/// <summary>Loads series/book/chapter catalogs from a content root (legacy <c>content/</c> or NMP/1 <c>src/</c>).</summary>
 public sealed class ManuscriptCatalog
 {
-    /// <summary>Loads all series under <c>content/series</c>.</summary>
+    /// <summary>Loads all fiction series (legacy <c>content/series</c> or NMP <c>src/Fiction/**</c>).</summary>
     public IReadOnlyList<SeriesInfo> Load(string contentRoot)
     {
         var root = Path.GetFullPath(contentRoot);
         if (!Directory.Exists(root))
             throw new DirectoryNotFoundException($"Content root not found: {root}");
 
+        if (IsProtocolRoot(root))
+            return LoadProtocolSeries(root);
+
         var seriesList = new List<SeriesInfo>();
         var seriesDir = Path.Combine(root, "content", "series");
         if (Directory.Exists(seriesDir))
         {
             foreach (var dir in Directory.GetDirectories(seriesDir).OrderBy(Path.GetFileName, StringComparer.Ordinal))
-                seriesList.Add(LoadSeries(dir));
+                seriesList.Add(LoadLegacySeries(dir));
         }
 
         return seriesList;
     }
 
-    /// <summary>Loads standalone books under <c>content/books</c>.</summary>
+    /// <summary>Loads standalone books (legacy <c>content/books</c> or NMP NonFiction books).</summary>
     public IReadOnlyList<BookInfo> LoadStandaloneBooks(string contentRoot)
     {
         var root = Path.GetFullPath(contentRoot);
+        if (IsProtocolRoot(root))
+            return LoadProtocolStandaloneBooks(root);
+
         var booksDir = Path.Combine(root, "content", "books");
         if (!Directory.Exists(booksDir))
             return [];
 
         return Directory.GetDirectories(booksDir)
             .OrderBy(Path.GetFileName, StringComparer.Ordinal)
-            .Select(dir => LoadBook(dir, seriesId: null))
+            .Select(dir => LoadBook(dir, seriesId: null, protocolLayout: false))
             .ToList();
     }
 
@@ -52,77 +58,212 @@ public sealed class ManuscriptCatalog
                 return book;
         }
 
-        var standaloneDir = Path.Combine(contentRoot, "content", "books", bookId);
-        if (Directory.Exists(standaloneDir))
-            return LoadBook(standaloneDir, null);
+        foreach (var book in LoadStandaloneBooks(contentRoot))
+        {
+            if (book.Id.Equals(bookId, StringComparison.OrdinalIgnoreCase))
+                return book;
+        }
 
         return null;
     }
 
-    internal static SeriesInfo LoadSeries(string seriesDirectory)
+    static bool IsProtocolRoot(string root) =>
+        File.Exists(Path.Combine(root, "manuscript.yaml"))
+        || Directory.Exists(Path.Combine(root, "src", "Fiction"))
+        || Directory.Exists(Path.Combine(root, "src", "NonFiction"));
+
+    static List<SeriesInfo> LoadProtocolSeries(string root)
+    {
+        var seriesList = new List<SeriesInfo>();
+        var fictionRoot = Path.Combine(root, "src", "Fiction");
+        if (!Directory.Exists(fictionRoot))
+            return seriesList;
+
+        foreach (var universeDir in Directory.GetDirectories(fictionRoot).OrderBy(Path.GetFileName, StringComparer.Ordinal))
+        {
+            foreach (var child in Directory.GetDirectories(universeDir).OrderBy(Path.GetFileName, StringComparer.Ordinal))
+            {
+                if (!File.Exists(Path.Combine(child, "series.yaml")))
+                    continue;
+                seriesList.Add(LoadProtocolSeriesDir(child));
+            }
+        }
+
+        return seriesList;
+    }
+
+    static List<BookInfo> LoadProtocolStandaloneBooks(string root)
+    {
+        var books = new List<BookInfo>();
+        var fictionRoot = Path.Combine(root, "src", "Fiction");
+        if (Directory.Exists(fictionRoot))
+        {
+            foreach (var universeDir in Directory.GetDirectories(fictionRoot))
+            {
+                foreach (var child in Directory.GetDirectories(universeDir))
+                {
+                    if (File.Exists(Path.Combine(child, "series.yaml")))
+                        continue;
+                    if (File.Exists(Path.Combine(child, "book.yaml")))
+                        books.Add(LoadBook(child, seriesId: null, protocolLayout: true));
+                }
+            }
+        }
+
+        var nonFictionRoot = Path.Combine(root, "src", "NonFiction");
+        if (Directory.Exists(nonFictionRoot))
+        {
+            foreach (var subjectDir in Directory.GetDirectories(nonFictionRoot).OrderBy(Path.GetFileName, StringComparer.Ordinal))
+            {
+                foreach (var bookDir in Directory.GetDirectories(subjectDir).OrderBy(Path.GetFileName, StringComparer.Ordinal))
+                {
+                    if (File.Exists(Path.Combine(bookDir, "book.yaml")))
+                        books.Add(LoadBook(bookDir, seriesId: null, protocolLayout: true));
+                }
+            }
+        }
+
+        return books;
+    }
+
+    static SeriesInfo LoadProtocolSeriesDir(string seriesDirectory)
+    {
+        var yaml = BookYaml.LoadFile(Path.Combine(seriesDirectory, "series.yaml"));
+        var id = Path.GetFileName(seriesDirectory);
+        var title = BookYaml.GetString(yaml, "title")
+                    ?? BookYaml.GetString(yaml, "name")
+                    ?? id;
+
+        var books = new List<BookInfo>();
+        foreach (var bookDir in Directory.GetDirectories(seriesDirectory).OrderBy(Path.GetFileName, StringComparer.Ordinal))
+        {
+            var name = Path.GetFileName(bookDir);
+            if (name is "References" or "references" or "Assets" or "assets")
+                continue;
+            if (!File.Exists(Path.Combine(bookDir, "book.yaml")))
+                continue;
+            books.Add(LoadBook(bookDir, id, protocolLayout: true));
+        }
+
+        books = books
+            .OrderBy(b => ReadBookOrder(b.DirectoryPath) ?? int.MaxValue)
+            .ThenBy(b => b.Id, StringComparer.Ordinal)
+            .ToList();
+
+        var references = LoadReferenceSets(seriesDirectory);
+        return new SeriesInfo(id, title, seriesDirectory, books, references);
+    }
+
+    static SeriesInfo LoadLegacySeries(string seriesDirectory)
     {
         var yaml = BookYaml.LoadFile(Path.Combine(seriesDirectory, "series.yaml"));
         var id = BookYaml.GetString(yaml, "id") ?? Path.GetFileName(seriesDirectory);
-        var title = BookYaml.GetString(yaml, "name") ?? id;
+        var title = BookYaml.GetString(yaml, "name") ?? BookYaml.GetString(yaml, "title") ?? id;
 
         var books = new List<BookInfo>();
         var booksDir = Path.Combine(seriesDirectory, "books");
         if (Directory.Exists(booksDir))
         {
             foreach (var bookDir in Directory.GetDirectories(booksDir).OrderBy(Path.GetFileName, StringComparer.Ordinal))
-                books.Add(LoadBook(bookDir, id));
+                books.Add(LoadBook(bookDir, id, protocolLayout: false));
         }
 
         var references = LoadReferenceSets(seriesDirectory);
         return new SeriesInfo(id, title, seriesDirectory, books, references);
     }
 
-    internal static BookInfo LoadBook(string bookDirectory, string? seriesId)
+    static int? ReadBookOrder(string bookDirectory)
+    {
+        var yaml = BookYaml.LoadFile(Path.Combine(bookDirectory, "book.yaml"));
+        if (yaml.TryGetValue("order", out var raw) && raw is not null)
+        {
+            if (raw is int i)
+                return i;
+            if (int.TryParse(raw.ToString(), out var parsed))
+                return parsed;
+        }
+
+        return null;
+    }
+
+    internal static BookInfo LoadBook(string bookDirectory, string? seriesId, bool protocolLayout)
     {
         var bookYaml = BookYaml.LoadFile(Path.Combine(bookDirectory, "book.yaml"));
         var id = Path.GetFileName(bookDirectory);
         var title = BookYaml.GetString(bookYaml, "title") ?? id;
         var subtitle = BookYaml.GetString(bookYaml, "subtitle");
-        var author = BookYaml.GetString(bookYaml, "author");
-        var orderFromHeading = BookYaml.GetBool(bookYaml, "chapter_order_from_heading");
+        var author = BookYaml.GetString(bookYaml, "author")
+                     ?? FirstAuthor(bookYaml)
+                     ?? null;
+        var orderFromHeading = !protocolLayout && BookYaml.GetBool(bookYaml, "chapter_order_from_heading");
         var debugMode = BookYaml.GetBool(bookYaml, "debug_mode");
 
         var chapters = new List<ChapterInfo>();
-        var chDir = Path.Combine(bookDirectory, "chapters");
-        if (Directory.Exists(chDir))
+        var chDir = ResolveDir(bookDirectory, protocolLayout ? "Chapters" : "chapters", "chapters", "Chapters");
+        if (chDir is not null)
         {
-            foreach (var file in Directory.GetFiles(chDir, "*.md").OrderBy(Path.GetFileName, StringComparer.Ordinal))
+            foreach (var file in Directory.GetFiles(chDir, "*.md"))
             {
                 var stem = Path.GetFileNameWithoutExtension(file);
+                var sortKey = protocolLayout
+                    ? ChapterOrder.GetFilenameSortKey(file)
+                    : ChapterOrder.GetSortKey(file);
                 chapters.Add(new ChapterInfo(
                     stem,
                     ChapterOrder.ReadChapterTitle(file) ?? stem,
                     ChapterKind.Chapter,
-                    ChapterOrder.GetSortKey(file),
+                    sortKey,
                     file));
             }
         }
 
-        var apDir = Path.Combine(bookDirectory, "appendices");
-        if (Directory.Exists(apDir))
+        var apDir = ResolveDir(bookDirectory, protocolLayout ? "Appendices" : "appendices", "appendices", "Appendices");
+        if (apDir is not null)
         {
             var appendixFiles = Directory.GetFiles(apDir, "*.md").OrderBy(Path.GetFileName, StringComparer.Ordinal).ToList();
             for (var i = 0; i < appendixFiles.Count; i++)
             {
                 var file = appendixFiles[i];
                 var stem = Path.GetFileNameWithoutExtension(file);
+                var sortKey = protocolLayout ? ChapterOrder.GetFilenameSortKey(file) : i;
                 chapters.Add(new ChapterInfo(
                     stem,
                     ChapterOrder.ReadChapterTitle(file) ?? stem,
                     ChapterKind.Appendix,
-                    i,
+                    sortKey,
                     file));
             }
         }
 
-        var ordered = ChapterOrder.SortChapters(chapters, orderFromHeading);
+        var ordered = protocolLayout
+            ? chapters.OrderBy(c => c.Kind).ThenBy(c => c.SortKey).ThenBy(c => c.FilePath, StringComparer.OrdinalIgnoreCase).ToList()
+            : ChapterOrder.SortChapters(chapters, orderFromHeading);
         var references = LoadReferenceSets(bookDirectory);
         return new BookInfo(id, title, subtitle, author, bookDirectory, seriesId, ordered, orderFromHeading, debugMode, references);
+    }
+
+    static string? FirstAuthor(Dictionary<string, object?> yaml)
+    {
+        if (!yaml.TryGetValue("authors", out var raw) || raw is null)
+            return null;
+        if (raw is System.Collections.IList list && list.Count > 0)
+            return list[0]?.ToString();
+        return raw.ToString();
+    }
+
+    static string? ResolveDir(string parent, string preferred, params string[] fallbacks)
+    {
+        var preferredPath = Path.Combine(parent, preferred);
+        if (Directory.Exists(preferredPath))
+            return preferredPath;
+        foreach (var name in fallbacks)
+        {
+            var path = Path.Combine(parent, name);
+            if (Directory.Exists(path))
+                return path;
+        }
+
+        return null;
     }
 
     static List<ReferenceSetInfo> LoadReferenceSets(string containerDir)
@@ -161,12 +302,14 @@ public sealed class ManuscriptCatalog
 
     static string? ResolveReferenceRoot(string containerDir)
     {
-        var references = Path.Combine(containerDir, "references");
-        if (Directory.Exists(references))
-            return references;
+        foreach (var name in new[] { "References", "references", "reference" })
+        {
+            var path = Path.Combine(containerDir, name);
+            if (Directory.Exists(path))
+                return path;
+        }
 
-        var reference = Path.Combine(containerDir, "reference");
-        return Directory.Exists(reference) ? reference : null;
+        return null;
     }
 
     static List<ReferenceFileInfo> CollectReferenceFiles(string rootDir)
