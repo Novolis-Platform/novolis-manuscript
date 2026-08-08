@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageId>Novolis.Manuscript.References</PackageId>
+    <IsPackable>true</IsPackable>
+    <RootNamespace>Novolis.Manuscript.References</RootNamespace>
+    <Description>Domain-aware manuscript reference library built on Novolis.IO.Indexing (cards, sets, open facets — no Markdown/YAML parsing).</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Novolis.Manuscript\Novolis.Manuscript.csproj" />
+    <PackageReference Include="Novolis.IO.Indexing" />
+  </ItemGroup>
+</Project>

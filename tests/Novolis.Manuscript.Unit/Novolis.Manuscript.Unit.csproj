@@ -6,10 +6,12 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
-  <ItemGroup>
+    <ItemGroup>
     <PackageReference Include="JetBrains.Annotations" />
     <PackageReference Include="Markdig" />
     <PackageReference Include="Novolis.Audio.Voice.EdgeTts" />
+    <PackageReference Include="Novolis.IO.Indexing" />
+    <PackageReference Include="Novolis.IO.Recovery" />
     <PackageReference Include="Novolis.Markup.Markdown.Rendering" />
     <PackageReference Include="QuestPDF" />
     <PackageReference Include="TUnit" />
@@ -23,6 +25,7 @@
     <ProjectReference Include="..\..\src\Novolis.Manuscript.IO\Novolis.Manuscript.IO.csproj" />
     <ProjectReference Include="..\..\src\Novolis.Manuscript.Metrics\Novolis.Manuscript.Metrics.csproj" />
     <ProjectReference Include="..\..\src\Novolis.Manuscript.Editorial\Novolis.Manuscript.Editorial.csproj" />
+    <ProjectReference Include="..\..\src\Novolis.Manuscript.References\Novolis.Manuscript.References.csproj" />
     <ProjectReference Include="..\..\src\Novolis.Avalonia.Manuscript\Novolis.Avalonia.Manuscript.csproj" />
   </ItemGroup>
 </Project>

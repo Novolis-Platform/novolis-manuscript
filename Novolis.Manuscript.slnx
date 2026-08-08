@@ -8,6 +8,7 @@
     <Project Path="src/Novolis.Manuscript.Export.Audio/Novolis.Manuscript.Export.Audio.csproj" />
     <Project Path="src/Novolis.Manuscript.Metrics/Novolis.Manuscript.Metrics.csproj" />
     <Project Path="src/Novolis.Manuscript.Editorial/Novolis.Manuscript.Editorial.csproj" />
+    <Project Path="src/Novolis.Manuscript.References/Novolis.Manuscript.References.csproj" />
     <Project Path="src/Novolis.Manuscript.Cli/Novolis.Manuscript.Cli.csproj" />
     <Project Path="src/Novolis.Avalonia.Manuscript/Novolis.Avalonia.Manuscript.csproj" />
   </Folder>
