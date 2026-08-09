@@ -33,7 +33,12 @@ public sealed class ChapterMetadataHtmlCoverageTests
             ManuscriptDocumentEmitters.WriteHtml("T", assembled, htmlPath, null, showAllTags: true);
             var debugHtml = await File.ReadAllTextAsync(htmlPath);
             await Assert.That(debugHtml).Contains("debug-mode");
-            await Assert.That(debugHtml.Contains("DATE") || debugHtml.Contains("date") || debugHtml.Contains("sl-k")).IsTrue();
+            await Assert.That(
+                    debugHtml.Contains("DATE", StringComparison.Ordinal)
+                    || debugHtml.Contains("2495.001", StringComparison.Ordinal)
+                    || debugHtml.Contains("LINE", StringComparison.Ordinal)
+                    || debugHtml.Contains("sl-k", StringComparison.Ordinal))
+                .IsTrue();
 
             ManuscriptDocumentEmitters.WriteHtml("T", assembled, htmlPath, null, showAllTags: false);
             var readerHtml = await File.ReadAllTextAsync(htmlPath);

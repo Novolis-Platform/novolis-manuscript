@@ -7,4 +7,4 @@ var paths = ManuscriptMarkdownExporter.ExportBook(book, outputDir);
 // book.reader.md, book.author.md, book.reader.html
 ```
 
-Reader Markdown strips YAML front matter and hidden fields (`pov`, `characters`, …). Author Markdown includes hidden metadata as callouts.
+Reader Markdown strips YAML front matter and private fields (`pov`, `characters`, …). Public keys are emitted as plain `>` value lines (no `[!tag]`). Author Markdown keeps the same public dateline; private fields stay in source YAML only.

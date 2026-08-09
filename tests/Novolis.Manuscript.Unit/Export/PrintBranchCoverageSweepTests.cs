@@ -154,7 +154,7 @@ public sealed class PrintBranchCoverageSweepTests
                 [withNumber],
                 DebugMode: true),
             authorMode: false);
-        await Assert.That(author).Contains("[!");
+        await Assert.That(author).Contains("> ");
 
         var noHeadingTitle = BookPrintAssembler.FromChapterMarkdown(
             "---\ndate: d\n---\n\nProse\n",

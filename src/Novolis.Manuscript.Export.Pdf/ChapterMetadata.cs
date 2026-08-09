@@ -3,11 +3,14 @@ using Novolis.Markup.Markdown;
 
 namespace Novolis.Manuscript.Export.Pdf;
 
-/// <summary>Blockquotes where every non-empty line is <c>[!tag] value</c> (chapter metadata).</summary>
+/// <summary>Blockquotes for chapter datelines: legacy <c>[!tag] value</c> or plain public mirrors.</summary>
 [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage(Justification = "Legacy callout quote parsing; reader path uses assembler datelines.")]
 internal static class ChapterMetadataQuote
 {
     static readonly Regex TagOpenings = new(@"\[!([a-z0-9_-]+)\]\s*", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    static readonly Regex PublicDatelineValueRegex = new(
+        @"^(\d{4}\.\d{1,4}(?:\s+\d{1,2}:\d{2})?|\d{4}-\d{2}-\d{2}(?:\s+\d{1,2}:\d{2})?|TK|TBD)$",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     /// <summary>
     /// Extract every <c>[!tag] value</c> pair from plain text. Hand-authored files sometimes merge
@@ -35,8 +38,14 @@ internal static class ChapterMetadataQuote
         return list;
     }
 
-    /// <summary>Extracts <c>[!tag] value</c> rows from a Novolis Markdown quote/alert section.</summary>
-    public static bool TryGetRows(IMarkdownSection section, out List<(string Tag, string Value)> rows)
+    /// <summary>
+    /// Extracts dateline rows from a quote/alert. Plain (untagged) lines are only accepted when
+    /// <paramref name="blockAlreadyStarted"/> or the text is a stardate / TK public mirror.
+    /// </summary>
+    public static bool TryGetRows(
+        IMarkdownSection section,
+        bool blockAlreadyStarted,
+        out List<(string Tag, string Value)> rows)
     {
         var text = section switch
         {
@@ -50,8 +59,24 @@ internal static class ChapterMetadataQuote
             return false;
         }
 
+        if (text.Length == 0)
+        {
+            rows = [];
+            return blockAlreadyStarted;
+        }
+
         rows = SplitFieldsFromPlain(text);
-        return rows.Count > 0;
+        if (rows.Count > 0)
+            return true;
+
+        if (!blockAlreadyStarted && !PublicDatelineValueRegex.IsMatch(text))
+        {
+            rows = [];
+            return false;
+        }
+
+        rows = [("line", text)];
+        return true;
     }
 }
 
@@ -60,7 +85,8 @@ internal static class ChapterMetadataQuote
 internal static class ChapterMetadataTagVisibility
 {
     public static bool IsPublicTag(string tag) =>
-        Novolis.Manuscript.ChapterMetadataVisibility.IsPublicTag(tag);
+        string.Equals(tag, "line", StringComparison.OrdinalIgnoreCase)
+        || Novolis.Manuscript.ChapterMetadataVisibility.IsPublicTag(tag);
 
     public static List<(string Tag, string Value)> FilterForBuild(
         List<(string Tag, string Value)> rows,

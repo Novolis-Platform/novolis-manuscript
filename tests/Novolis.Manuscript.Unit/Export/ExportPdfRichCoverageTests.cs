@@ -68,7 +68,7 @@ public sealed class ExportPdfRichCoverageTests
 
             var txt = await File.ReadAllTextAsync(paths.TextPath);
             var html = await File.ReadAllTextAsync(paths.HtmlPath);
-            await Assert.That(txt).Contains("DATE");
+            await Assert.That(txt).Contains("2026-01-01");
             await Assert.That(txt).Contains("1.");
             await Assert.That(txt).Contains("|");
             await Assert.That(html).Contains("chapter-metadata");

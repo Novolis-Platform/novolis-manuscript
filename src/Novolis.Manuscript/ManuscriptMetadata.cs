@@ -64,6 +64,10 @@ public static class ManuscriptMetadata
         @"^>\s*\[!([A-Za-z0-9_-]+)\]\s*(.*)$",
         RegexOptions.Compiled);
 
+    static readonly Regex PublicDatelineStartRegex = new(
+        @"^>\s*(?:\[!([A-Za-z0-9_-]+)\]\s*.*|\d{4}\.\d{1,4}(?:\s+\d{1,2}:\d{2})?|\d{4}-\d{2}-\d{2}(?:\s+\d{1,2}:\d{2})?|TK|TBD)\s*$",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
     static readonly Regex ChapterHeadingRegex = new(
         @"^#\s*Chapter\s+(\d+(?:\.\d+)?)\s*-\s*(.+?)\s*$",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -75,6 +79,25 @@ public static class ManuscriptMetadata
     /// <summary>Whether a line is an Obsidian-style metadata callout.</summary>
     public static bool IsCalloutLine(string line) =>
         CalloutLineRegex.IsMatch(line.TrimEnd('\r'));
+
+    /// <summary>
+    /// Whether a line starts a public dateline block: legacy <c>&gt; [!tag]</c> or plain
+    /// stardate / TK mirror (first public YAML line).
+    /// </summary>
+    public static bool IsPublicDatelineStartLine(string line) =>
+        PublicDatelineStartRegex.IsMatch(line.TrimEnd('\r'));
+
+    /// <summary>
+    /// Contiguous dateline quote under H1: callouts, blank <c>&gt;</c>, or plain value mirrors
+    /// once the block has started.
+    /// </summary>
+    public static bool IsDatelineQuoteLine(string line)
+    {
+        var t = line.TrimEnd('\r');
+        if (t.Length == 0 || t[0] != '>')
+            return false;
+        return true;
+    }
 
     /// <summary>Parses metadata and returns body text after the preamble (YAML fences stripped).</summary>
     public static (ManuscriptChapterMetadata Meta, string Body, ManuscriptMetadataFormat Format) Parse(string text)

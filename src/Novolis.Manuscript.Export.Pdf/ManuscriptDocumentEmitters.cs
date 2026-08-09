@@ -85,6 +85,7 @@ internal static class ManuscriptDocumentEmitters
         var document = MarkdownDocument.Parse(markdown);
         var sb = new StringBuilder();
         var pending = new List<(string Tag, string Value)>();
+        var allowDateline = true;
 
         void Flush()
         {
@@ -101,12 +102,21 @@ internal static class ManuscriptDocumentEmitters
 
         foreach (var section in document)
         {
-            if (ChapterMetadataQuote.TryGetRows(section, out var rows))
+            if (section is IMarkdownHeader { Level: 1 })
+            {
+                Flush();
+                ManuscriptPlainTextRenderer.AppendSection(section, sb);
+                allowDateline = true;
+                continue;
+            }
+
+            if (allowDateline && ChapterMetadataQuote.TryGetRows(section, pending.Count > 0, out var rows))
             {
                 pending.AddRange(rows);
                 continue;
             }
 
+            allowDateline = false;
             Flush();
             ManuscriptPlainTextRenderer.AppendSection(section, sb);
         }
@@ -120,6 +130,7 @@ internal static class ManuscriptDocumentEmitters
     {
         var sb = new StringBuilder();
         var pending = new List<(string Tag, string Value)>();
+        var allowDateline = true;
 
         void Flush()
         {
@@ -140,12 +151,21 @@ internal static class ManuscriptDocumentEmitters
 
         foreach (var section in document)
         {
-            if (ChapterMetadataQuote.TryGetRows(section, out var rows))
+            if (section is IMarkdownHeader { Level: 1 })
+            {
+                Flush();
+                sb.Append(MarkdownToHtmlConverter.Convert(MarkdownDocument.Create(section))).Append('\n');
+                allowDateline = true;
+                continue;
+            }
+
+            if (allowDateline && ChapterMetadataQuote.TryGetRows(section, pending.Count > 0, out var rows))
             {
                 pending.AddRange(rows);
                 continue;
             }
 
+            allowDateline = false;
             Flush();
             sb.Append(MarkdownToHtmlConverter.Convert(MarkdownDocument.Create(section))).Append('\n');
         }

@@ -56,9 +56,10 @@ public sealed class PrintAssemblerYamlRegressionTests
         await Assert.That(reader).DoesNotContain("status:");
         await Assert.That(reader).DoesNotContain("---");
         await Assert.That(reader).DoesNotContain("> [!pov]");
-        await Assert.That(reader).Contains("> [!date] 2495.220");
-        await Assert.That(reader).Contains("> [!time] 12:30");
-        await Assert.That(reader).Contains("> [!location] Duckville Station");
+        await Assert.That(reader).DoesNotContain("> [!date]");
+        await Assert.That(reader).Contains("> 2495.220 12:30");
+        await Assert.That(reader).Contains("> K21408");
+        await Assert.That(reader).Contains("> Duckville Station");
         await Assert.That(reader).Contains("James's lunch was spaghetti.");
         await Assert.That(reader.IndexOf("Chapter 1 - Lunch Break", StringComparison.Ordinal))
             .IsLessThan(reader.IndexOf("2495.220", StringComparison.Ordinal));
@@ -74,14 +75,16 @@ public sealed class PrintAssemblerYamlRegressionTests
     }
 
     [Test]
-    public async Task Author_mode_includes_hidden_callouts()
+    public async Task Author_mode_does_not_dump_private_into_quotes()
     {
         var view = BookPrintAssembler.FromChapterMarkdown(YamlChapter);
         var author = BookPrintAssembler.AssembleMarkdown(
             new BookPrintDocument("book", new BookPrintCover("T", null, null, null, null), [view], true),
             authorMode: true);
-        await Assert.That(author).Contains("> [!pov] James");
-        await Assert.That(author).Contains("> [!characters]");
+        await Assert.That(author).DoesNotContain("> [!pov]");
+        await Assert.That(author).DoesNotContain("> [!characters]");
+        await Assert.That(author).Contains("> 2495.220 12:30");
+        await Assert.That(author).Contains("> Duckville Station");
     }
 
     [Test]
@@ -129,7 +132,8 @@ public sealed class PrintAssemblerYamlRegressionTests
             await Assert.That(reader).DoesNotContain("> [!pov]");
             await Assert.That(File.Exists(paths.AuthorMarkdownPath!)).IsTrue();
             var author = await File.ReadAllTextAsync(paths.AuthorMarkdownPath!);
-            await Assert.That(author).Contains("> [!pov]");
+            await Assert.That(author).DoesNotContain("> [!pov]");
+            await Assert.That(author).Contains("> 2495.220");
             await Assert.That(File.Exists(paths.HtmlPath!)).IsTrue();
         }
         finally
