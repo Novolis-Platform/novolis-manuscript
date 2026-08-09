@@ -20,11 +20,12 @@ public static class ManuscriptBookPdfExporter
     {
         ArgumentNullException.ThrowIfNull(book);
         ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
-        settings ??= new ManuscriptPrintSettings();
+        settings ??= ManuscriptPrintSettings.ResolveForDirectory(book.DirectoryPath);
 
         var markdown = BookPrintAssembler.AssembleReaderMarkdownFromFiles(
             book.Chapters.Select(c => c.FilePath),
-            authorMode: book.DebugMode);
+            authorMode: book.DebugMode,
+            includePublicDateline: settings.IncludePublicDateline);
         var yaml = BookYaml.LoadFile(Path.Combine(book.DirectoryPath, "book.yaml"));
         var rights = BookYaml.GetString(yaml, "rights") ?? BookYaml.GetString(yaml, "copyright");
         var series = BookYaml.GetString(yaml, "series")

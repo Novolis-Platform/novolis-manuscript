@@ -88,6 +88,36 @@ public sealed class PrintAssemblerYamlRegressionTests
     }
 
     [Test]
+    public async Task NonFiction_assemble_skips_public_dateline()
+    {
+        var view = BookPrintAssembler.FromChapterMarkdown(YamlChapter);
+        var md = BookPrintAssembler.AssembleMarkdown(
+            new BookPrintDocument("book", new BookPrintCover("T", null, null, null, null), [view], false),
+            includePublicDateline: false);
+
+        await Assert.That(md).DoesNotContain("> 2495.220");
+        await Assert.That(md).DoesNotContain("> K21408");
+        await Assert.That(md).Contains("# Chapter 1 - Lunch Break");
+        await Assert.That(md).Contains("James's lunch was spaghetti.");
+    }
+
+    [Test]
+    public async Task ForTextbook_detects_NonFiction_path_and_letter_defaults()
+    {
+        var nf = Path.Combine("D:", "repos", "books", "src", "NonFiction", "software-engineering", "intro");
+        await Assert.That(ManuscriptPrintSettings.IsNonFictionBookPath(nf)).IsTrue();
+        await Assert.That(ManuscriptPrintSettings.IsNonFictionBookPath(
+            Path.Combine("D:", "repos", "books", "src", "Fiction", "calypso"))).IsFalse();
+
+        var settings = ManuscriptPrintSettings.ForTextbook();
+        await Assert.That(settings.PageWidthInches).IsEqualTo(8.5f);
+        await Assert.That(settings.PageHeightInches).IsEqualTo(11f);
+        await Assert.That(settings.IncludePublicDateline).IsFalse();
+        await Assert.That(settings.UseTextbookChrome).IsTrue();
+        await Assert.That(settings.CodeFontFamily).IsEqualTo("Consolas");
+    }
+
+    [Test]
     public async Task Book_print_txt_html_have_no_yaml_keys()
     {
         var root = CreateBook(YamlChapter);

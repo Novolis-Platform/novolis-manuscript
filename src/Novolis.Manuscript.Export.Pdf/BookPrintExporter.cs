@@ -44,7 +44,7 @@ public static class BookPrintExporter
             throw new DirectoryNotFoundException($"Book directory not found: {bookDirectory}");
 
         var book = LoadBookFromDirectory(bookDirectory, string.IsNullOrWhiteSpace(seriesId) ? null : seriesId, bookId);
-        var settings = options.ResolveSettings();
+        var settings = options.ResolveSettings(book.DirectoryPath);
         var showAll = options.ResolveShowAllMetadataTags(book.DebugMode);
 
         var seriesTitle = options.SeriesTitle
@@ -63,7 +63,8 @@ public static class BookPrintExporter
 
         var markdown = BookPrintAssembler.AssembleReaderMarkdownFromFiles(
             book.Chapters.Select(c => c.FilePath),
-            authorMode: showAll);
+            authorMode: showAll,
+            includePublicDateline: settings.IncludePublicDateline);
         ManuscriptDocumentEmitters.WriteMarkdown(markdown, mdPath);
 
         var css = StylesheetLocator.Find(bookDirectory, contentRootHint: Directory.GetParent(bookDirectory)?.FullName);
@@ -101,7 +102,7 @@ public static class BookPrintExporter
         ArgumentException.ThrowIfNullOrWhiteSpace(outputDirectory);
         options ??= new BookPrintOptions();
 
-        var settings = options.ResolveSettings();
+        var settings = options.ResolveSettings(book.DirectoryPath);
         var showAll = options.ResolveShowAllMetadataTags(book.DebugMode);
         var seriesTitle = options.SeriesTitle
                           ?? ResolveSeriesTitle(book.DirectoryPath, book.SeriesId)
@@ -120,7 +121,8 @@ public static class BookPrintExporter
 
         var markdown = BookPrintAssembler.AssembleReaderMarkdownFromFiles(
             book.Chapters.Select(c => c.FilePath),
-            authorMode: showAll);
+            authorMode: showAll,
+            includePublicDateline: settings.IncludePublicDateline);
         ManuscriptDocumentEmitters.WriteMarkdown(markdown, mdPath);
 
         var css = StylesheetLocator.Find(book.DirectoryPath);

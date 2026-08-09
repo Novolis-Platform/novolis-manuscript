@@ -30,10 +30,12 @@ public sealed class BookPrintOptions
     /// <summary>Optional rights/copyright line on the cover.</summary>
     public string? Rights { get; set; }
 
-    /// <summary>Resolves effective print settings from this options instance.</summary>
-    public ManuscriptPrintSettings ResolveSettings()
+    /// <summary>Resolves effective print settings from this options instance and book path.</summary>
+    /// <param name="bookDirectory">Book folder; used to pick fiction vs textbook profile when <see cref="Settings"/> is null.</param>
+    public ManuscriptPrintSettings ResolveSettings(string? bookDirectory = null)
     {
-        var settings = Settings ?? ManuscriptPrintSettings.Load(PrintSettingsPath);
+        var settings = Settings
+                       ?? ManuscriptPrintSettings.ResolveForDirectory(bookDirectory, PrintSettingsPath);
         if (IncludeCover is { } cover)
             settings.IncludeCover = cover;
         return settings;

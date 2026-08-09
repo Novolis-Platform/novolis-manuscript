@@ -71,12 +71,16 @@ public static class BookPrintAssembler
 
     /// <summary>
     /// Assembles Markdown for export.
-    /// Reader and author: H1 + plain public dateline (<c>&gt; value</c>) + body.
+    /// Reader and author: H1 + optional plain public dateline (<c>&gt; value</c>) + body.
     /// Private fields stay in source YAML and are never emitted as <c>&gt;</c> boxes.
     /// </summary>
+    /// <param name="document">Print document with chapter views.</param>
+    /// <param name="authorMode">Reserved; private fields stay YAML-only.</param>
+    /// <param name="includePublicDateline">When false (NonFiction / textbook), skip emitting dateline quotes.</param>
     public static string AssembleMarkdown(
         BookPrintDocument document,
-        bool authorMode = false)
+        bool authorMode = false,
+        bool includePublicDateline = true)
     {
         ArgumentNullException.ThrowIfNull(document);
         _ = authorMode; // Private fields are YAML-only; no separate author box dump.
@@ -85,7 +89,7 @@ public static class BookPrintAssembler
         {
             if (i > 0)
                 sb.AppendLine();
-            AppendChapter(sb, document.Chapters[i]);
+            AppendChapter(sb, document.Chapters[i], includePublicDateline);
         }
 
         return sb.ToString();
@@ -94,7 +98,8 @@ public static class BookPrintAssembler
     /// <summary>Assembles reader Markdown from chapter file paths.</summary>
     public static string AssembleReaderMarkdownFromFiles(
         IEnumerable<string> chapterPaths,
-        bool authorMode = false)
+        bool authorMode = false,
+        bool includePublicDateline = true)
     {
         var views = FromChapterFiles(chapterPaths);
         var doc = new BookPrintDocument(
@@ -102,25 +107,28 @@ public static class BookPrintAssembler
             new BookPrintCover("book", null, null, null, null),
             views,
             DebugMode: authorMode);
-        return AssembleMarkdown(doc, authorMode);
+        return AssembleMarkdown(doc, authorMode, includePublicDateline);
     }
 
-    static void AppendChapter(StringBuilder sb, ChapterPrintView chapter)
+    static void AppendChapter(StringBuilder sb, ChapterPrintView chapter, bool includePublicDateline)
     {
         if (!string.IsNullOrWhiteSpace(chapter.HeadingMarkdown))
             sb.AppendLine(chapter.HeadingMarkdown.TrimEnd());
         else if (!string.IsNullOrWhiteSpace(chapter.Title))
             sb.AppendLine("# " + chapter.Title.Trim());
 
-        // Plain value-only quotes → TextBox / chapter-metadata box (no [!tag]).
-        foreach (var line in chapter.ReaderDatelineLines)
+        if (includePublicDateline)
         {
-            if (!string.IsNullOrWhiteSpace(line))
-                sb.AppendLine("> " + line.Trim());
-        }
+            // Plain value-only quotes → TextBox / chapter-metadata box (no [!tag]).
+            foreach (var line in chapter.ReaderDatelineLines)
+            {
+                if (!string.IsNullOrWhiteSpace(line))
+                    sb.AppendLine("> " + line.Trim());
+            }
 
-        if (chapter.ReaderDatelineLines.Count > 0)
-            sb.AppendLine();
+            if (chapter.ReaderDatelineLines.Count > 0)
+                sb.AppendLine();
+        }
 
         var body = chapter.BodyMarkdown.TrimEnd();
         if (body.Length > 0)
