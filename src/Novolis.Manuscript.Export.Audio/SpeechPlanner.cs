@@ -75,8 +75,13 @@ public static class SpeechPlanner
         var segments = new List<SpeechSegment>();
         for (var i = 0; i < scenes.Count; i++)
         {
-            foreach (var chunk in Chunk(scenes[i], options.MaxChunkChars))
-                segments.Add(SpeechSegment.Spoken(chunk));
+            // Prefer blank-line paragraphs so listen can start after a short first synth.
+            foreach (var paragraph in SplitParagraphs(scenes[i]))
+            {
+                foreach (var chunk in Chunk(paragraph, options.MaxChunkChars))
+                    segments.Add(SpeechSegment.Spoken(chunk));
+            }
+
             if (i < scenes.Count - 1 && options.SceneBreakMs > 0)
                 segments.Add(SpeechSegment.Pause(options.SceneBreakMs));
         }
@@ -120,6 +125,21 @@ public static class SpeechPlanner
         }
 
         return text;
+    }
+
+    /// <summary>Splits scene text on blank lines into paragraphs.</summary>
+    public static IReadOnlyList<string> SplitParagraphs(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        var normalized = text.Replace("\r\n", "\n").Trim();
+        if (normalized.Length == 0)
+            return [];
+
+        return normalized
+            .Split("\n\n", StringSplitOptions.None)
+            .Select(p => p.Trim())
+            .Where(p => p.Length > 0)
+            .ToList();
     }
 
     /// <summary>Splits text into chunks not exceeding <paramref name="maxChars"/>.</summary>
