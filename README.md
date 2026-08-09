@@ -10,17 +10,20 @@
 </p>
 
 <p align="center">
-  <strong>Manuscript app framework</strong><br/>
-  Protocol, legacy books adapter, workspace doctor, IO, PDF/audio export, and Avalonia chrome.
+  <strong>Long-form manuscript tooling</strong><br/>
+  Manuscript authoring helpers that sit beside Markup and Documents.
 </p>
 
 <p align="center">
+  <a href="https://novolis-platform.github.io/.github/novolis-manuscript/"><img src="https://img.shields.io/badge/docs-portfolio-0a7ea3" alt="docs"/></a>
   <a href="https://github.com/Novolis-Platform/novolis-manuscript/actions"><img src="https://img.shields.io/github/actions/workflow/status/Novolis-Platform/novolis-manuscript/merge.yml?branch=main&label=merge&logo=github" alt="merge"/></a>
   <a href="https://github.com/orgs/Novolis-Platform/packages?repo_name=novolis-manuscript"><img src="https://img.shields.io/badge/packages-GitHub%20Packages-0a7ea3?logo=nuget" alt="packages"/></a>
   <a href="https://github.com/Novolis-Platform"><img src="https://img.shields.io/badge/org-Novolis--Platform-111827" alt="org"/></a>
 </p>
 
 <p align="center">
+  <a href="https://novolis-platform.github.io/.github/novolis-manuscript/">Docs</a>
+  ·
   <a href="https://nuget.pkg.github.com/Novolis-Platform/index.json"><code>https://nuget.pkg.github.com/Novolis-Platform/index.json</code></a>
   ·
   <a href="https://github.com/Novolis-Platform/.github/blob/main/profile/README.md">Org landing</a>
@@ -59,3 +62,4 @@ dotnet test d:\novolis\novolis-manuscript\tests\Novolis.Manuscript.Unit\Novolis.
 ```
 
 Cross-repo iteration: open `d:\novolis\Novolis.Platform.slnx` (ProjectReference mode).
+
