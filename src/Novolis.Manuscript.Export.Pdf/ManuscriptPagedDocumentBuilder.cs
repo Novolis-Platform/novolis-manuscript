@@ -94,6 +94,8 @@ internal static class ManuscriptPagedDocumentBuilder
             },
             UseTextbookChrome = settings.UseTextbookChrome,
             EnableChapterDatelineBoxes = settings.IncludePublicDateline,
+            ShowCodeLineNumbers = settings.UseTextbookChrome,
+            HighlightCode = settings.UseTextbookChrome,
             HeaderTemplate = string.Empty,
             FooterTemplate = "{page} / {pages}",
             FooterOnFirstPage = false,
