@@ -23,10 +23,6 @@
     "Novolis.Manuscript.Export.Audio": {
       "project": "src/Novolis.Manuscript.Export.Audio/Novolis.Manuscript.Export.Audio.csproj",
       "paths": ["src/Novolis.Manuscript.Export.Audio/**", "tests/Novolis.Manuscript.Unit/Export/**", "Directory.Build.props", "Directory.Packages.props", "global.json"]
-    },
-    "Novolis.Avalonia.Manuscript": {
-      "project": "src/Novolis.Avalonia.Manuscript/Novolis.Avalonia.Manuscript.csproj",
-      "paths": ["src/Novolis.Avalonia.Manuscript/**", "Directory.Build.props", "Directory.Packages.props", "global.json"]
     }
   }
 }
