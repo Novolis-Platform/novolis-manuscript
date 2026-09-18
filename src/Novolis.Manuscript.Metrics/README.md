@@ -2,6 +2,14 @@
 
 Word-count / TODO metrics and character-slice reports for NMP/1 manuscript workspaces.
 
+## Install
+
+```powershell
+dotnet add package Novolis.Manuscript.Metrics
+```
+
+## Usage
+
 ```csharp
 var results = ManuscriptMetrics.RunAll(@"D:\repos\books");
 var one = ManuscriptMetrics.RunOne(@"D:\repos\books", "the-calypso-cycle", "calypso");

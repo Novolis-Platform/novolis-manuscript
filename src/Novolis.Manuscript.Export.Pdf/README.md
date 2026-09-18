@@ -8,6 +8,8 @@ Book and reference PDF export for manuscripts via `Novolis.Documents` + `Novolis
 dotnet add package Novolis.Manuscript.Export.Pdf
 ```
 
+## Usage
+
 ## Studio (single PDF)
 
 ```csharp

@@ -2,6 +2,12 @@
 
 Command-line tool for NMP/1 manuscript workspaces: chapter surgery, audiobook generation, print, and metrics.
 
+## Install
+
+Install the CLI tool from GitHub Packages.
+
+## Usage
+
 ```powershell
 dotnet tool install -g Novolis.Manuscript.Cli --add-source https://nuget.pkg.github.com/Novolis-Platform/index.json
 
