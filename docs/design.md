@@ -23,7 +23,7 @@ Documents/Markup island — Avalonia hosts may call PDF/HTML helpers; do not pul
 ## Packages
 
 - `Novolis.Manuscript`
-- `Novolis.Manuscript.Cli`
+- `novolis-tools` hosts the `novolis-manuscript` developer command over these packages.
 - `Novolis.Manuscript.Editorial`
 - `Novolis.Manuscript.Export.Audio`
 - `Novolis.Manuscript.Export.Markdown`

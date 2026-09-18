@@ -17,7 +17,6 @@ Published docs: [https://novolis-platform.github.io/.github/novolis-manuscript/]
 | Package |
 | --- |
 | `Novolis.Manuscript` |
-| `Novolis.Manuscript.Cli` |
 | `Novolis.Manuscript.Editorial` |
 | `Novolis.Manuscript.Export.Audio` |
 | `Novolis.Manuscript.Export.Markdown` |

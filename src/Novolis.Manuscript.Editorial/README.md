@@ -1,3 +1,11 @@
+<!-- novolis-pkg-brand:start -->
+<p align="center">
+  <a href="https://github.com/Novolis-Platform/novolis-manuscript">
+    <img src="https://raw.githubusercontent.com/Novolis-Platform/.github/main/brand/logo-icon.svg" width="72" alt="Novolis"/>
+  </a>
+</p>
+<!-- novolis-pkg-brand:end -->
+
 # Novolis.Manuscript.Editorial
 
 Deterministic editorial detectors for NMP manuscript chapter prose: lexicon forbid/prefer lists, AI-slop patterns, and naming variants.
@@ -25,3 +33,4 @@ foreach (var f in findings)
 ```
 
 Finding codes: `editorial-lexicon-forbid`, `editorial-lexicon-prefer`, `editorial-slop-*`, `editorial-naming-variant`.
+

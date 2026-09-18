@@ -1,3 +1,11 @@
+<!-- novolis-pkg-brand:start -->
+<p align="center">
+  <a href="https://github.com/Novolis-Platform/novolis-manuscript">
+    <img src="https://raw.githubusercontent.com/Novolis-Platform/.github/main/brand/logo-icon.svg" width="72" alt="Novolis"/>
+  </a>
+</p>
+<!-- novolis-pkg-brand:end -->
+
 # Novolis.Manuscript.Export.Markdown
 
 Exports manuscript books to reader/author Markdown and HTML using `Novolis.Markup.Markdown` (`Parse` + `MarkdownToHtmlConverter`), no Markdig.
@@ -16,3 +24,4 @@ var paths = ManuscriptMarkdownExporter.ExportBook(book, outputDir);
 ```
 
 Reader Markdown strips YAML front matter and private fields (`pov`, `characters`, …). Public keys are emitted as plain `>` value lines (no `[!tag]`). Author Markdown keeps the same public dateline; private fields stay in source YAML only.
+

@@ -1,3 +1,26 @@
+<!-- novolis-package-index:start -->
+> **GitHub Packages shows this repository README on every package page** (upstream limitation).
+> Open the **package README** for install and quick start — embedded in each .nupkg and linked below.
+
+## Published packages
+
+| Package | Install | Package README |
+|---------|---------|----------------|
+| `Novolis.Manuscript` | `dotnet add package Novolis.Manuscript` | [README](https://github.com/Novolis-Platform/novolis-manuscript/blob/main/src/Novolis.Manuscript/README.md) |
+| `Novolis.Manuscript.Editorial` | `dotnet add package Novolis.Manuscript.Editorial` | [README](https://github.com/Novolis-Platform/novolis-manuscript/blob/main/src/Novolis.Manuscript.Editorial/README.md) |
+| `Novolis.Manuscript.Export.Audio` | `dotnet add package Novolis.Manuscript.Export.Audio` | [README](https://github.com/Novolis-Platform/novolis-manuscript/blob/main/src/Novolis.Manuscript.Export.Audio/README.md) |
+| `Novolis.Manuscript.Export.Markdown` | `dotnet add package Novolis.Manuscript.Export.Markdown` | [README](https://github.com/Novolis-Platform/novolis-manuscript/blob/main/src/Novolis.Manuscript.Export.Markdown/README.md) |
+| `Novolis.Manuscript.Export.Pdf` | `dotnet add package Novolis.Manuscript.Export.Pdf` | [README](https://github.com/Novolis-Platform/novolis-manuscript/blob/main/src/Novolis.Manuscript.Export.Pdf/README.md) |
+| `Novolis.Manuscript.IO` | `dotnet add package Novolis.Manuscript.IO` | [README](https://github.com/Novolis-Platform/novolis-manuscript/blob/main/src/Novolis.Manuscript.IO/README.md) |
+| `Novolis.Manuscript.LegacyBooks` | `dotnet add package Novolis.Manuscript.LegacyBooks` | [README](https://github.com/Novolis-Platform/novolis-manuscript/blob/main/src/Novolis.Manuscript.LegacyBooks/README.md) |
+| `Novolis.Manuscript.Metrics` | `dotnet add package Novolis.Manuscript.Metrics` | [README](https://github.com/Novolis-Platform/novolis-manuscript/blob/main/src/Novolis.Manuscript.Metrics/README.md) |
+| `Novolis.Manuscript.Protocol` | `dotnet add package Novolis.Manuscript.Protocol` | [README](https://github.com/Novolis-Platform/novolis-manuscript/blob/main/src/Novolis.Manuscript.Protocol/README.md) |
+| `Novolis.Manuscript.References` | `dotnet add package Novolis.Manuscript.References` | [README](https://github.com/Novolis-Platform/novolis-manuscript/blob/main/src/Novolis.Manuscript.References/README.md) |
+
+For NuGet.org and Visual Studio, the **embedded** README.md inside each package is authoritative.
+
+<!-- novolis-package-index:end -->
+
 <!-- novolis-marketing:start -->
 <p align="center">
   <a href="https://github.com/Novolis-Platform">
@@ -50,9 +73,12 @@ Packable Manuscript framework for Books Writer Studio and Books Mobile.
 | `Novolis.Manuscript.References` | Reference cards/sets on `Novolis.IO.Indexing` |
 | `Novolis.Manuscript.Export.Pdf` | PDF export |
 | `Novolis.Manuscript.Export.Audio` | TTS / audiobook |
-| `Novolis.Manuscript.Cli` | `novolis-manuscript` tool |
 
 Avalonia chrome for editors lives in `Novolis.Avalonia.Manuscript` (`novolis-avalonia`).
+
+The `novolis-manuscript` developer tool is published from
+[`novolis-tools`](https://github.com/Novolis-Platform/novolis-tools). This
+repository publishes the manuscript libraries only.
 
 ## Build
 

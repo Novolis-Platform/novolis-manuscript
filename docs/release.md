@@ -9,7 +9,6 @@ Published docs: [https://novolis-platform.github.io/.github/novolis-manuscript/]
 ## Packages
 
 - `Novolis.Manuscript`
-- `Novolis.Manuscript.Cli`
 - `Novolis.Manuscript.Editorial`
 - `Novolis.Manuscript.Export.Audio`
 - `Novolis.Manuscript.Export.Markdown`
@@ -21,6 +20,10 @@ Published docs: [https://novolis-platform.github.io/.github/novolis-manuscript/]
 - `Novolis.Manuscript.References`
 
 ## Consumers
+
+The `novolis-manuscript` developer tool is released from
+[`novolis-tools`](https://github.com/Novolis-Platform/novolis-tools). This
+repository publishes the library packages listed above.
 
 Restore from nuget.org + `https://nuget.pkg.github.com/Novolis-Platform/index.json` only.
 

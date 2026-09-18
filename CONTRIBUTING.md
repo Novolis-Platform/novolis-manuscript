@@ -9,6 +9,6 @@ Packable libraries must follow [documentation-policy.md](https://github.com/Novo
 ## Manuscript layering
 
 - **Libraries** own ascii, metrics, slices, surgery, doctor, editorial, and export pipelines ([library-vs-cli](https://github.com/Novolis-Platform/novolis-governance/blob/main/docs/library-vs-cli.md)).
-- **`Novolis.Manuscript.Cli`** is argv → library only (exit codes / JSON).
+- The `novolis-manuscript` command in `novolis-tools` is argv → library only (exit codes / JSON).
 - **`Novolis.Avalonia.Manuscript`** is composable chrome panels — not a product host ([Avalonia grain](https://github.com/Novolis-Platform/novolis-governance/blob/main/docs/avalonia-composition-grain.md)).
 
