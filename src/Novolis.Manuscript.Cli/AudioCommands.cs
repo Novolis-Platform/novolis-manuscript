@@ -1,4 +1,3 @@
-using Novolis.Audio.Voice.EdgeTts;
 using Novolis.Manuscript;
 using Novolis.Manuscript.Export.Audio;
 
@@ -55,7 +54,20 @@ static class AudioCommands
 
         var outputDir = ResolveOutDir(ws.ContentRoot, opts, book);
         Directory.CreateDirectory(outputDir);
-        using var synthesizer = new EdgeTtsSynthesizer();
+        var endpointText = opts.AzureEndpoint ??
+            Environment.GetEnvironmentVariable("NOVOLIS_AZURE_SPEECH_ENDPOINT");
+        var key = opts.AzureKey ??
+            Environment.GetEnvironmentVariable("NOVOLIS_AZURE_SPEECH_KEY");
+        if (!Uri.TryCreate(endpointText, UriKind.Absolute, out var endpoint) ||
+            !string.Equals(endpoint.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase) ||
+            string.IsNullOrWhiteSpace(key))
+        {
+            throw new InvalidOperationException(
+                "Azure Speech synthesis requires an HTTPS endpoint and key. " +
+                "Use --azure-endpoint/--azure-key or NOVOLIS_AZURE_SPEECH_ENDPOINT/NOVOLIS_AZURE_SPEECH_KEY.");
+        }
+
+        var synthesizer = new AzureSpeechSynthesizer(endpoint, key);
         var pipeline = new AudiobookPipeline(synthesizer);
         var options = new AudiobookOptions
         {
@@ -104,6 +116,8 @@ static class AudioCommands
             novolis-manuscript audio --series ID --book ID [options]
 
               --voice-map PATH     Voice map YAML (optional)
+              --azure-endpoint URI Azure Speech resource endpoint (or environment variable)
+              --azure-key KEY      Azure Speech resource key (or environment variable)
               --from N --to N      Chapter order range
               --chapter STEM       Single chapter id/stem
               --jobs N             Parallel synthesis jobs (default 2)
@@ -125,6 +139,8 @@ sealed class AudioCliOptions
     public string? Series { get; init; }
     public string? Book { get; init; }
     public string? VoiceMap { get; init; }
+    public string? AzureEndpoint { get; init; }
+    public string? AzureKey { get; init; }
     public string? ChapterStem { get; init; }
     public string? OutputDir { get; init; }
     public double? From { get; init; }
@@ -139,6 +155,7 @@ sealed class AudioCliOptions
     public static AudioCliOptions Parse(string[] args)
     {
         string? workspace = null, series = null, book = null, voice = null, chapter = null, output = null;
+        string? azureEndpoint = null, azureKey = null;
         double? from = null, to = null;
         var jobs = 2;
         var force = false;
@@ -168,6 +185,12 @@ sealed class AudioCliOptions
                     break;
                 case "--voice-map":
                     voice = Need();
+                    break;
+                case "--azure-endpoint":
+                    azureEndpoint = Need();
+                    break;
+                case "--azure-key":
+                    azureKey = Need();
                     break;
                 case "--chapter":
                     chapter = Need();
@@ -217,6 +240,8 @@ sealed class AudioCliOptions
             Series = series,
             Book = book,
             VoiceMap = voice,
+            AzureEndpoint = azureEndpoint,
+            AzureKey = azureKey,
             ChapterStem = chapter,
             OutputDir = output,
             From = from,

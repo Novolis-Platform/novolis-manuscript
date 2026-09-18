@@ -1,4 +1,3 @@
-using Novolis.Audio.Voice.EdgeTts;
 using Novolis.Manuscript.Export.Audio;
 
 namespace Novolis.Manuscript.Unit;
@@ -63,9 +62,12 @@ public sealed class ExportAudioPipelineCoverageTests
                 new AudiobookChapterInput("ch01", "One", ch1),
                 new AudiobookChapterInput("ch02", "Two", ch2),
             };
-            var voice = VoiceSettings.FromProfile(
-                EdgeVoiceProfiles.Narrator,
-                new Dictionary<string, string> { ["Hello"] = "Hallo" });
+            var voice = new VoiceSettings
+            {
+                Voice = "en-US-AvaMultilingualNeural",
+                RatePercent = -4,
+                Pronunciation = new Dictionary<string, string> { ["Hello"] = "Hallo" },
+            };
 
             var first = await pipeline.GenerateAsync(
                 "book",

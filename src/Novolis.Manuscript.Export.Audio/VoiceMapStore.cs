@@ -4,8 +4,6 @@ using System.Text;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-using Novolis.Audio.Voice.EdgeTts;
-
 namespace Novolis.Manuscript.Export.Audio;
 
 /// <summary>
@@ -58,10 +56,10 @@ public static class VoiceMapStore
         sb.AppendLine("# All prose and quoted dialogue use this voice. The C# generator deliberately");
         sb.AppendLine("# does not parse speakers or maintain a character cast.");
         sb.AppendLine("narrator:");
-        sb.AppendLine($"  voice: {EdgeVoiceCatalog.ToShortName(settings.Voice)}");
-        sb.AppendLine($"  rate: \"{settings.Rate.ToSsml()}\"");
-        sb.AppendLine($"  pitch: \"{settings.Pitch.ToSsml()}\"");
-        sb.AppendLine($"  volume: \"{settings.Volume.ToSsml()}\"");
+        sb.AppendLine($"  voice: {settings.Voice}");
+        sb.AppendLine($"  rate: \"{FormatPercent(settings.RatePercent)}\"");
+        sb.AppendLine($"  pitch: \"{FormatHertz(settings.PitchHertz)}\"");
+        sb.AppendLine($"  volume: \"{FormatPercent(settings.VolumePercent)}\"");
         sb.AppendLine();
         sb.AppendLine("pauses:");
         sb.AppendLine($"  scene_break_ms: {settings.SceneBreakMs}");
@@ -69,7 +67,7 @@ public static class VoiceMapStore
         sb.AppendLine("generation:");
         sb.AppendLine($"  max_chunk_chars: {settings.MaxChunkChars}");
         sb.AppendLine();
-        sb.AppendLine("# Spoken-text rewrites for Edge TTS (manuscript files stay unchanged).");
+        sb.AppendLine("# Spoken-text rewrites for Azure Speech (manuscript files stay unchanged).");
         sb.AppendLine("# Match whole words only, longest keys first. Values are phonetic spellings");
         sb.AppendLine("# the neural voice is more likely to say correctly.");
         sb.AppendLine("pronunciation:");
@@ -106,17 +104,19 @@ public static class VoiceMapStore
         public VoiceSettings ToSettings()
         {
             var narrator = Narrator ?? new NarratorDto();
-            var voice = ResolveVoice(narrator.Voice);
-            var rate = ParsePercent(narrator.Rate, new ProsodyPercent(-4));
-            var pitch = ParseHertz(narrator.Pitch, ProsodyHertz.Zero);
-            var volume = ParsePercent(narrator.Volume, ProsodyPercent.Zero);
+            var voice = string.IsNullOrWhiteSpace(narrator.Voice)
+                ? "en-US-AvaMultilingualNeural"
+                : narrator.Voice.Trim();
+            var rate = ParsePercent(narrator.Rate, -4);
+            var pitch = ParseHertz(narrator.Pitch, 0);
+            var volume = ParsePercent(narrator.Volume, 0);
 
             return new VoiceSettings
             {
                 Voice = voice,
-                Rate = rate,
-                Pitch = pitch,
-                Volume = volume,
+                RatePercent = rate,
+                PitchHertz = pitch,
+                VolumePercent = volume,
                 SceneBreakMs = Pauses?.SceneBreakMs ?? 1200,
                 PauseMs = 500,
                 MaxChunkChars = Generation?.MaxChunkChars ?? 2800,
@@ -125,24 +125,35 @@ public static class VoiceMapStore
             };
         }
 
-        static EdgeVoice ResolveVoice(string? shortName)
+        static int ParsePercent(string? text, int fallback)
         {
-            if (string.IsNullOrWhiteSpace(shortName))
-                return EdgeVoice.EnUsAva;
-
-            if (!EdgeVoiceCatalog.TryParse(shortName, out var voice))
-                throw new EdgeTtsException(
-                    $"Unrecognized curated voice id '{shortName}'. " +
-                    "Use a short name from EdgeVoiceCatalog (e.g. en-US-AvaNeural).");
-
-            return voice;
+            if (string.IsNullOrWhiteSpace(text))
+                return fallback;
+            var value = text.Trim().TrimEnd('%');
+            return int.TryParse(
+                value,
+                System.Globalization.NumberStyles.Integer,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var parsed)
+                ? parsed
+                : fallback;
         }
 
-        static ProsodyPercent ParsePercent(string? text, ProsodyPercent fallback) =>
-            ProsodyPercent.TryParse(text, out var value) ? value : fallback;
-
-        static ProsodyHertz ParseHertz(string? text, ProsodyHertz fallback) =>
-            ProsodyHertz.TryParse(text, out var value) ? value : fallback;
+        static int ParseHertz(string? text, int fallback)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return fallback;
+            var value = text.Trim();
+            if (value.EndsWith("Hz", StringComparison.OrdinalIgnoreCase))
+                value = value[..^2];
+            return int.TryParse(
+                value,
+                System.Globalization.NumberStyles.Integer,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var parsed)
+                ? parsed
+                : fallback;
+        }
     }
 
     sealed class NarratorDto
@@ -162,4 +173,16 @@ public static class VoiceMapStore
     {
         public int? MaxChunkChars { get; init; }
     }
+
+    static string FormatPercent(int value) => value switch
+    {
+        > 0 => $"+{value}%",
+        _ => $"{value}%",
+    };
+
+    static string FormatHertz(int value) => value switch
+    {
+        > 0 => $"+{value}Hz",
+        _ => $"{value}Hz",
+    };
 }

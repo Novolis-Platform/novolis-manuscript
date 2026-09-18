@@ -1,5 +1,4 @@
 using Novolis.Manuscript.Export.Audio;
-using Novolis.Audio.Voice.EdgeTts;
 
 namespace Novolis.Manuscript.Unit;
 
@@ -101,12 +100,13 @@ public sealed class ManuscriptParsingCoverageTests
         };
 
         var speech = settings.ToSpeechOptions();
-        var synthesis = settings.ToEdgeTtsOptions();
         await Assert.That(speech.SceneBreakMs).IsEqualTo(321);
         await Assert.That(speech.MaxChunkChars).IsEqualTo(654);
         await Assert.That(speech.Pronunciation["a"]).IsEqualTo("b");
-        await Assert.That(synthesis.Voice).IsEqualTo(settings.Voice);
-        await Assert.That(synthesis.Rate).IsEqualTo(settings.Rate);
+        await Assert.That(settings.Voice).IsEqualTo("en-US-AvaMultilingualNeural");
+        await Assert.That(settings.RatePercent).IsEqualTo(-4);
+        await Assert.That(settings.PitchHertz).IsEqualTo(0);
+        await Assert.That(settings.VolumePercent).IsEqualTo(0);
     }
 
     [Test]
@@ -238,20 +238,20 @@ public sealed class ManuscriptParsingCoverageTests
 
         var settings = VoiceMapStore.LoadFromYaml(yaml);
 
-        await Assert.That(settings.Voice).IsEqualTo(EdgeVoice.EnUsAndrew);
-        await Assert.That(settings.Rate).IsEqualTo(new ProsodyPercent(-4));
-        await Assert.That(settings.Pitch).IsEqualTo(ProsodyHertz.Zero);
-        await Assert.That(settings.Volume).IsEqualTo(new ProsodyPercent(12));
+        await Assert.That(settings.Voice).IsEqualTo("en-US-AndrewNeural");
+        await Assert.That(settings.RatePercent).IsEqualTo(-4);
+        await Assert.That(settings.PitchHertz).IsEqualTo(0);
+        await Assert.That(settings.VolumePercent).IsEqualTo(12);
         await Assert.That(settings.SceneBreakMs).IsEqualTo(987);
         await Assert.That(settings.MaxChunkChars).IsEqualTo(456);
         await Assert.That(settings.Pronunciation["two words"]).IsEqualTo("joined");
     }
 
     [Test]
-    public async Task Voice_map_rejects_unknown_voice_and_null_inputs()
+    public async Task Voice_map_accepts_open_voice_names_and_rejects_null_inputs()
     {
-        await Assert.That(() => VoiceMapStore.LoadFromYaml("narrator:\n  voice: xx-XX-MissingNeural"))
-            .ThrowsExactly<EdgeTtsException>();
+        var openVoice = VoiceMapStore.LoadFromYaml("narrator:\n  voice: xx-XX-MissingNeural");
+        await Assert.That(openVoice.Voice).IsEqualTo("xx-XX-MissingNeural");
         await Assert.That(() => VoiceMapStore.LoadFromYaml(null!)).ThrowsExactly<ArgumentNullException>();
         await Assert.That(() => VoiceMapStore.Load(" ")).ThrowsExactly<ArgumentException>();
         await Assert.That(() => VoiceMapStore.Save("", new VoiceSettings()))

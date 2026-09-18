@@ -1,4 +1,3 @@
-using Novolis.Audio.Voice.EdgeTts;
 using Novolis.Manuscript.Export.Audio;
 
 namespace Novolis.Manuscript.Unit;
@@ -90,10 +89,10 @@ public sealed class ManuscriptAudiobookTests
     {
         var settings = new VoiceSettings
         {
-            Voice = EdgeVoice.EnUsJenny,
-            Rate = new ProsodyPercent(-10),
-            Pitch = new ProsodyHertz(2),
-            Volume = new ProsodyPercent(5),
+            Voice = "en-US-JennyNeural",
+            RatePercent = -10,
+            PitchHertz = 2,
+            VolumePercent = 5,
             SceneBreakMs = 900,
             PauseMs = 400,
             MaxChunkChars = 2400,
@@ -106,10 +105,10 @@ public sealed class ManuscriptAudiobookTests
         await Assert.That(yaml).Contains("max_chunk_chars: 2400");
 
         var loaded = VoiceMapStore.LoadFromYaml(yaml);
-        await Assert.That(loaded.Voice).IsEqualTo(EdgeVoice.EnUsJenny);
-        await Assert.That(loaded.Rate.Value).IsEqualTo(-10);
-        await Assert.That(loaded.Pitch.Value).IsEqualTo(2);
-        await Assert.That(loaded.Volume.Value).IsEqualTo(5);
+        await Assert.That(loaded.Voice).IsEqualTo("en-US-JennyNeural");
+        await Assert.That(loaded.RatePercent).IsEqualTo(-10);
+        await Assert.That(loaded.PitchHertz).IsEqualTo(2);
+        await Assert.That(loaded.VolumePercent).IsEqualTo(5);
         await Assert.That(loaded.SceneBreakMs).IsEqualTo(900);
         await Assert.That(loaded.MaxChunkChars).IsEqualTo(2400);
         await Assert.That(loaded.Pronunciation["Novolis"]).IsEqualTo("No-voh-lis");
@@ -138,17 +137,17 @@ public sealed class ManuscriptAudiobookTests
             """;
 
         var loaded = VoiceMapStore.LoadFromYaml(booksYaml);
-        await Assert.That(loaded.Voice).IsEqualTo(EdgeVoice.EnUsAva);
-        await Assert.That(loaded.Rate.Value).IsEqualTo(-4);
-        await Assert.That(loaded.Pitch.Value).IsEqualTo(0);
-        await Assert.That(loaded.Volume.Value).IsEqualTo(0);
+        await Assert.That(loaded.Voice).IsEqualTo("en-US-AvaNeural");
+        await Assert.That(loaded.RatePercent).IsEqualTo(-4);
+        await Assert.That(loaded.PitchHertz).IsEqualTo(0);
+        await Assert.That(loaded.VolumePercent).IsEqualTo(0);
         await Assert.That(loaded.SceneBreakMs).IsEqualTo(1200);
         await Assert.That(loaded.MaxChunkChars).IsEqualTo(2800);
         await Assert.That(loaded.Pronunciation["Ixa"]).IsEqualTo("Ick-sah");
     }
 
     [Test]
-    public async Task VoiceMapStore_rejects_unknown_voice()
+    public async Task VoiceMapStore_accepts_open_voice_names()
     {
         const string yaml =
             """
@@ -159,8 +158,8 @@ public sealed class ManuscriptAudiobookTests
               volume: "+0%"
             """;
 
-        await Assert.That(() => VoiceMapStore.LoadFromYaml(yaml))
-            .ThrowsExactly<EdgeTtsException>();
+        var loaded = VoiceMapStore.LoadFromYaml(yaml);
+        await Assert.That(loaded.Voice).IsEqualTo("en-US-NotInCatalogNeural");
     }
 
     [Test]

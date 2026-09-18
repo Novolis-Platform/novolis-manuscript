@@ -20,7 +20,7 @@ static class Mp3DurationEstimator
         }
         catch
         {
-            // Fallback: assume Edge TTS 48 kbps mono (~6000 bytes/s).
+            // Fallback: assume the default Azure Speech 48 kbps mono output (~6000 bytes/s).
             return mp3.Length * 1000L / 6000L;
         }
     }
