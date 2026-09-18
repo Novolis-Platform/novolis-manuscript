@@ -7,7 +7,7 @@
     <PackageVersion Include="Avalonia" Version="12.0.2" />
     <PackageVersion Include="Avalonia.Themes.Fluent" Version="12.0.2" />
     <PackageVersion Include="JetBrains.Annotations" Version="2025.2.4" />
-    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.203" />
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.401" />
     <PackageVersion Include="NAudio" Version="2.3.0" />
     <PackageVersion Include="Novolis.Analyzers.StackBoundaries" Version="2026.1.*" />
     <PackageVersion Include="Novolis.Audio.Voice.EdgeTts" Version="2026.1.*" />
