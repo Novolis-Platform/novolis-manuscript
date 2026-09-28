@@ -7,12 +7,12 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Novolis.Documents" />
-    <PackageReference Include="Novolis.Documents.Layout" />
-    <PackageReference Include="Novolis.Documents.Skia" />
-    <PackageReference Include="Novolis.Markup.Markdown" />
-    <PackageReference Include="Novolis.Markup.Markdown.Documents" />
-    <PackageReference Include="Novolis.Math.Measure" />
+    <LibraryReference Include="Novolis.Documents" />
+    <LibraryReference Include="Novolis.Documents.Layout" />
+    <LibraryReference Include="Novolis.Documents.Skia" />
+    <LibraryReference Include="Novolis.Markup.Markdown" />
+    <LibraryReference Include="Novolis.Markup.Markdown.Documents" />
+    <LibraryReference Include="Novolis.Math.Measure" />
     <!-- Explicit: ProjectReference mode substitutes Novolis.Documents.Skia with a sibling ProjectReference,
          which does not carry its transitive SkiaSharp package dependencies through the NuGet restore graph. -->
     <PackageReference Include="SkiaSharp" />

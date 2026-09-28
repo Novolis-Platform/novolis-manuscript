@@ -7,7 +7,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Novolis.IO.Paths" />
+    <LibraryReference Include="Novolis.IO.Paths" />
     <PackageReference Include="YamlDotNet" />
     <ProjectReference Include="..\Novolis.Manuscript.Protocol\Novolis.Manuscript.Protocol.csproj" />
   </ItemGroup>

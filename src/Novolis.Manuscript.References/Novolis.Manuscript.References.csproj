@@ -8,6 +8,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Novolis.Manuscript\Novolis.Manuscript.csproj" />
-    <PackageReference Include="Novolis.IO.Indexing" />
+    <LibraryReference Include="Novolis.IO.Indexing" />
   </ItemGroup>
 </Project>
