@@ -47,4 +47,38 @@ public sealed class SpeechPlannerTests
         await Assert.That(spoken[0]).Contains("First paragraph");
         await Assert.That(spoken[1]).Contains("Second paragraph");
     }
+
+    [Test]
+    public async Task Normalize_Renders_Markdown_For_Speech()
+    {
+        var md = """
+            # Title
+
+            ## A heading
+
+            This is **bold**, [a link](https://example.com), and `inline code`.
+
+            - First item
+            - [Second item](https://example.com/two)
+
+            | Name | Value |
+            | --- | --- |
+            | Alpha | Bravo |
+
+            ```csharp
+            var value = 1;
+            ```
+            """;
+
+        var normalized = SpeechPlanner.Normalize(md, keepTitle: false);
+
+        await Assert.That(normalized).Contains("This is bold, a link, and inline code.");
+        await Assert.That(normalized).Contains("List item. First item");
+        await Assert.That(normalized).Contains("List item. Second item");
+        await Assert.That(normalized).Contains("Table row. Name: Alpha. Value: Bravo");
+        await Assert.That(normalized).Contains("Code block csharp. var value = 1;");
+        await Assert.That(normalized).DoesNotContain("**");
+        await Assert.That(normalized).DoesNotContain("https://example.com");
+        await Assert.That(normalized).DoesNotContain("```");
+    }
 }

@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using Novolis.Manuscript;
+using Novolis.Markup.Markdown;
 
 namespace Novolis.Manuscript.Export.Audio;
 
@@ -90,26 +91,171 @@ public static class SpeechPlanner
         return new SpeechPlan(segments, hash);
     }
 
-    /// <summary>Strips YAML front matter, callouts, and headings for speech.</summary>
+    /// <summary>Converts manuscript Markdown into readable speech paragraphs.</summary>
     public static string Normalize(string markdown, bool keepTitle)
     {
         ArgumentNullException.ThrowIfNull(markdown);
         var view = BookPrintAssembler.FromChapterMarkdown(markdown);
-        var sb = new StringBuilder();
-        if (keepTitle && !string.IsNullOrWhiteSpace(view.Title))
-            sb.AppendLine(view.Title);
+        var blocks = new List<string>();
+        var title = keepTitle && !string.IsNullOrWhiteSpace(view.Title)
+            ? RenderInlineMarkdown(view.Title)
+            : string.Empty;
 
-        foreach (var line in view.BodyMarkdown.Replace("\r\n", "\n").Split('\n'))
+        var body = string.Join(
+            '\n',
+            view.BodyMarkdown
+                .Replace("\r\n", "\n")
+                .Split('\n')
+                .Where(static line =>
+                {
+                    var trimmed = line.Trim();
+                    return !trimmed.StartsWith("> [!", StringComparison.Ordinal) &&
+                           !trimmed.StartsWith(">[!", StringComparison.Ordinal);
+                }));
+        foreach (var section in MarkdownDocument.Parse(body))
         {
-            var trimmed = line.TrimEnd();
-            if (trimmed.StartsWith("> [!", StringComparison.Ordinal) || trimmed.StartsWith(">[!", StringComparison.Ordinal))
-                continue;
-            if (trimmed.StartsWith('#'))
-                continue;
-            sb.AppendLine(trimmed);
+            switch (section)
+            {
+                case IMarkdownHeader header:
+                    // Chapter titles are handled above; keep existing speech behavior
+                    // of omitting Markdown headings from the spoken body.
+                    break;
+                case IMarkdownParagraph paragraph:
+                    AddBlock(blocks, RenderParagraph(paragraph));
+                    break;
+                case IMarkdownUnorderedList unordered:
+                    foreach (var item in unordered.Items)
+                        AddBlock(blocks, RenderListItem(item, ordered: false));
+                    break;
+                case IMarkdownOrderedList ordered:
+                    var number = 1;
+                    foreach (var item in ordered.Items)
+                        AddBlock(blocks, RenderListItem(item, ordered: true, number: number++));
+                    break;
+                case IMarkdownTable table:
+                    AddTableBlocks(blocks, table);
+                    break;
+                case IMarkdownQuote quote:
+                    AddBlock(
+                        blocks,
+                        "Quote. " + RenderInlineMarkdown(string.Join(' ', quote.Text)));
+                    break;
+                case IMarkdownCodeBlock code:
+                    var language = string.IsNullOrWhiteSpace(code.Language)
+                        ? string.Empty
+                        : $" {RenderInlineMarkdown(code.Language)}";
+                    AddBlock(
+                        blocks,
+                        $"Code block{language}. {CleanSpeechText(code.Code)}");
+                    break;
+                case IMarkdownHorizontalRule:
+                    // Keep the existing scene-break pause behavior.
+                    AddBlock(blocks, "***");
+                    break;
+                default:
+                    AddBlock(blocks, RenderInlineMarkdown(section.ToString()));
+                    break;
+            }
         }
 
-        return sb.ToString().Trim();
+        if (title.Length > 0)
+        {
+            var firstSpoken = blocks.FindIndex(static block => block != "***");
+            if (firstSpoken < 0)
+                blocks.Insert(0, title);
+            else
+                blocks[firstSpoken] = title + "\n" + blocks[firstSpoken];
+        }
+
+        return string.Join("\n\n", blocks).Trim();
+    }
+
+    static void AddBlock(List<string> blocks, string? text)
+    {
+        if (!string.IsNullOrWhiteSpace(text))
+            blocks.Add(text.Trim());
+    }
+
+    static string RenderParagraph(IMarkdownParagraph paragraph)
+    {
+        var text = new StringBuilder();
+        foreach (var item in paragraph.Items)
+        {
+            switch (item.Type)
+            {
+                case MarkdownParagraphItemType.Link:
+                    // The preceding LinkText contains the human-readable label.
+                    break;
+                case MarkdownParagraphItemType.Indent:
+                    text.Append(' ');
+                    break;
+                case MarkdownParagraphItemType.NewLine:
+                    text.Append(' ');
+                    break;
+                default:
+                    text.Append(item.Text);
+                    break;
+            }
+        }
+
+        return CleanSpeechText(text.ToString());
+    }
+
+    static string RenderInlineMarkdown(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return string.Empty;
+
+        var document = MarkdownDocument.Parse(text);
+        var rendered = string.Join(
+            ' ',
+            document
+                .OfType<IMarkdownParagraph>()
+                .Select(RenderParagraph)
+                .Where(static value => value.Length > 0));
+        return CleanSpeechText(string.IsNullOrWhiteSpace(rendered) ? text : rendered);
+    }
+
+    static string RenderListItem(string item, bool ordered, int number = 0)
+    {
+        var depth = MarkdownDocument.DecodeNestDepth(item, out var body);
+        var prefix = ordered
+            ? $"List item {number}"
+            : "List item";
+        if (depth > 0)
+            prefix = $"Nested {prefix.ToLowerInvariant()}";
+        return $"{prefix}. {RenderInlineMarkdown(body)}";
+    }
+
+    static void AddTableBlocks(List<string> blocks, IMarkdownTable table)
+    {
+        var headers = table.Headers.Select(RenderInlineMarkdown).ToArray();
+        if (headers.Length > 0)
+            AddBlock(blocks, "Table. " + string.Join(", ", headers));
+
+        foreach (var row in table.Rows)
+        {
+            var cells = row.Select(RenderInlineMarkdown).ToArray();
+            if (cells.Length == 0)
+                continue;
+
+            var values = cells
+                .Select((cell, index) =>
+                    index < headers.Length && headers[index].Length > 0
+                        ? $"{headers[index]}: {cell}"
+                        : cell)
+                .Where(static value => value.Length > 0);
+            AddBlock(blocks, "Table row. " + string.Join(". ", values));
+        }
+    }
+
+    static string CleanSpeechText(string text)
+    {
+        var cleaned = Regex.Replace(text, @"!\[([^\]]*)\]\([^)]*\)", "$1");
+        cleaned = Regex.Replace(cleaned, @"<[^>]+>", string.Empty);
+        cleaned = cleaned.Replace("\\", string.Empty, StringComparison.Ordinal);
+        cleaned = Regex.Replace(cleaned, @"[*_~`]+", string.Empty);
+        return Regex.Replace(cleaned, @"\s+", " ").Trim();
     }
 
     /// <summary>Applies whole-word pronunciation rewrites (longest keys first).</summary>

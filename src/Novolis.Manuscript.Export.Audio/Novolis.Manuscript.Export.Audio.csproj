@@ -7,6 +7,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <LibraryReference Include="Novolis.Markup.Markdown" />
     <PackageReference Include="NAudio" />
     <PackageReference Include="YamlDotNet" />
     <ProjectReference Include="..\Novolis.Manuscript\Novolis.Manuscript.csproj" />
