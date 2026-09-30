@@ -34,7 +34,7 @@ internal static class ManuscriptPagedDocumentBuilder
             cover.Author,
             cover.Series,
             cover.Rights,
-            includeToc: false);
+            settings.IncludeToc);
         var document = MarkdownPagedDocumentMapper.FromMarkdown(markdown, options);
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(pdfPath))!);
         DocumentPdf.Write(document, pdfPath);

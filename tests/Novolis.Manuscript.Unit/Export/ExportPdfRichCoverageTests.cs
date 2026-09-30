@@ -172,6 +172,35 @@ public sealed class ExportPdfRichCoverageTests
         var defaults = ManuscriptPrintSettings.Load(Path.Combine(Path.GetTempPath(), $"no-print-{Guid.NewGuid():N}.json"));
         await Assert.That(defaults.BodyFontSize).IsGreaterThan(0);
         await Assert.That(defaults.IncludeCover).IsTrue();
+        await Assert.That(defaults.IncludeToc).IsTrue();
+    }
+
+    [Test]
+    public async Task Book_pdf_includes_contents_outline_for_chapter_titles()
+    {
+        var root = CreateBookWorkspace("# Opening\n\nFirst chapter.\n", includeRights: false);
+        var outDir = Path.Combine(Path.GetTempPath(), $"ms-toc-{Guid.NewGuid():N}");
+        try
+        {
+            var bookDir = Path.Combine(root, "content", "series", "demo", "books", "book-one");
+            var paths = BookPrintExporter.ExportBookFolder(bookDir, outDir, "demo", "book-one");
+            var pdf = System.Text.Encoding.Latin1.GetString(await File.ReadAllBytesAsync(paths.PdfPath));
+            await Assert.That(pdf).Contains("/Type /Outlines");
+            await Assert.That(pdf).Contains(Utf16Title("Opening"));
+            await Assert.That(pdf).Contains(Utf16Title("Appendix A - Extra"));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+            if (Directory.Exists(outDir))
+                Directory.Delete(outDir, recursive: true);
+        }
+    }
+
+    static string Utf16Title(string text)
+    {
+        var encoded = System.Text.Encoding.BigEndianUnicode.GetBytes(text);
+        return "<FEFF" + Convert.ToHexString(encoded) + ">";
     }
 
     static string CreateBookWorkspace(string chapterMarkdown, bool includeRights)

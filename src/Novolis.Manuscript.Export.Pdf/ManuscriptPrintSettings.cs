@@ -37,6 +37,11 @@ public sealed class ManuscriptPrintSettings
     public bool IncludeCover { get; set; } = true;
 
     /// <summary>
+    /// When true, insert a Contents page of level-1 headings and write matching PDF outline bookmarks.
+    /// </summary>
+    public bool IncludeToc { get; set; } = true;
+
+    /// <summary>
     /// When true, emit plain public dateline <c>&gt;</c> lines under each H1 (fiction).
     /// NonFiction / textbook profile sets this false.
     /// </summary>
@@ -115,6 +120,7 @@ public sealed class ManuscriptPrintSettings
         BodyFontFamily = "Georgia",
         CodeFontFamily = "Consolas",
         IncludeCover = true,
+        IncludeToc = true,
         IncludePublicDateline = false,
         UseTextbookChrome = true,
         LineHeight = 1.6f,
@@ -208,6 +214,7 @@ public sealed class ManuscriptPrintSettings
         SetString(root, "fontFamily", v => target.BodyFontFamily = v);
         SetString(root, "codeFontFamily", v => target.CodeFontFamily = v);
         SetBool(root, "includeCover", v => target.IncludeCover = v);
+        SetBool(root, "includeToc", v => target.IncludeToc = v);
         SetBool(root, "includePublicDateline", v => target.IncludePublicDateline = v);
         SetBool(root, "useTextbookChrome", v => target.UseTextbookChrome = v);
     }
