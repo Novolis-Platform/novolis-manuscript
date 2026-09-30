@@ -1,14 +1,15 @@
 using Novolis.Documents;
 using Novolis.Documents.Skia;
+using Novolis.Markup.Markdown;
 using Novolis.Markup.Markdown.Documents;
 using Novolis.Math.Measure;
 
 namespace Novolis.Manuscript.Export.Pdf;
 
 /// <summary>
-/// Bridges assembled manuscript Markdown + <see cref="ManuscriptPrintSettings"/> into a
+/// Bridges typed markdown + <see cref="ManuscriptPrintSettings"/> into a
 /// <see cref="PagedDocument"/> via <see cref="MarkdownPagedDocumentMapper"/>, and writes PDF via
-/// <c>Novolis.Documents.Skia</c> (no QuestPDF, no Markdig).
+/// <c>Novolis.Documents.Skia</c>.
 /// </summary>
 internal static class ManuscriptPagedDocumentBuilder
 {
@@ -20,13 +21,18 @@ internal static class ManuscriptPagedDocumentBuilder
         string? Author,
         string? Rights);
 
-    /// <summary>Writes a book PDF from already-assembled reader/author Markdown.</summary>
-    public static void WriteBookPdf(
-        string markdown,
+    /// <summary>Writes a PDF from a typed markdown document (no string round-trip).</summary>
+    public static void WriteDocument(
+        IMarkdownDocument markdown,
         string pdfPath,
         BookCoverMeta cover,
-        ManuscriptPrintSettings settings)
+        ManuscriptPrintSettings settings,
+        bool includeToc,
+        bool includeCover)
     {
+        ArgumentNullException.ThrowIfNull(markdown);
+        ArgumentException.ThrowIfNullOrWhiteSpace(pdfPath);
+        ArgumentNullException.ThrowIfNull(settings);
         var options = ToOptions(
             settings,
             cover.Title,
@@ -34,22 +40,9 @@ internal static class ManuscriptPagedDocumentBuilder
             cover.Author,
             cover.Series,
             cover.Rights,
-            settings.IncludeToc);
-        var document = MarkdownPagedDocumentMapper.FromMarkdown(markdown, options);
-        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(pdfPath))!);
-        DocumentPdf.Write(document, pdfPath);
-    }
-
-    /// <summary>Writes a reference-manual PDF. <paramref name="markdown"/> should already include a leading Contents section.</summary>
-    public static void WriteReferencePdf(
-        string coverTitle,
-        string? coverSubtitle,
-        string markdown,
-        string pdfPath,
-        ManuscriptPrintSettings settings)
-    {
-        var options = ToOptions(settings, coverTitle, coverSubtitle, author: null, series: null, rights: null, includeToc: false);
-        var document = MarkdownPagedDocumentMapper.FromMarkdown(markdown, options);
+            includeToc,
+            includeCover);
+        var document = MarkdownPagedDocumentMapper.FromDocument(markdown, options);
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(pdfPath))!);
         DocumentPdf.Write(document, pdfPath);
     }
@@ -61,7 +54,8 @@ internal static class ManuscriptPagedDocumentBuilder
         string? author,
         string? series,
         string? rights,
-        bool includeToc) =>
+        bool includeToc,
+        bool includeCover) =>
         new()
         {
             Title = title,
@@ -69,7 +63,7 @@ internal static class ManuscriptPagedDocumentBuilder
             Author = author,
             Series = series,
             Rights = rights,
-            IncludeCover = settings.IncludeCover,
+            IncludeCover = includeCover,
             IncludeToc = includeToc,
             Trim = new Size(
                 LengthUnits.FromInches(settings.PageWidthInches),

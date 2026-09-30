@@ -8,6 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <LibraryReference Include="Novolis.IO.Paths" />
+    <LibraryReference Include="Novolis.Markup.Markdown" />
     <PackageReference Include="YamlDotNet" />
     <ProjectReference Include="..\Novolis.Manuscript.Protocol\Novolis.Manuscript.Protocol.csproj" />
   </ItemGroup>

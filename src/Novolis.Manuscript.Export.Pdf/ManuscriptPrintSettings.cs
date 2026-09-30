@@ -37,7 +37,7 @@ public sealed class ManuscriptPrintSettings
     public bool IncludeCover { get; set; } = true;
 
     /// <summary>
-    /// When true, insert a Contents page of level-1 headings and write matching PDF outline bookmarks.
+    /// When true, write PDF outline bookmarks from level-1 headings. No contents page is painted.
     /// </summary>
     public bool IncludeToc { get; set; } = true;
 

@@ -30,6 +30,9 @@ public sealed class BookPrintOptions
     /// <summary>Optional rights/copyright line on the cover.</summary>
     public string? Rights { get; set; }
 
+    /// <summary>Which PDF files to write. Default is one combined book PDF.</summary>
+    public BookPdfOutput PdfOutput { get; set; } = BookPdfOutput.Combine;
+
     /// <summary>Resolves effective print settings from this options instance and book path.</summary>
     /// <param name="bookDirectory">Book folder; used to pick fiction vs textbook profile when <see cref="Settings"/> is null.</param>
     public ManuscriptPrintSettings ResolveSettings(string? bookDirectory = null)

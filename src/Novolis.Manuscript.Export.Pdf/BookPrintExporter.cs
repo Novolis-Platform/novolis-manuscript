@@ -32,51 +32,51 @@ public static class BookPrintExporter
         if (!Directory.Exists(bookDirectory))
             throw new DirectoryNotFoundException($"Book directory not found: {bookDirectory}");
 
-        var book = LoadBookFromDirectory(bookDirectory, string.IsNullOrWhiteSpace(seriesId) ? null : seriesId, bookId);
-        var settings = options.ResolveSettings(book.DirectoryPath);
-        var showAll = options.ResolveShowAllMetadataTags(book.DebugMode);
+        var document = BookDocument.Open(bookDirectory);
+        var settings = options.ResolveSettings(document.DirectoryPath);
+        var showAll = options.ResolveShowAllMetadataTags(false);
 
         var seriesTitle = options.SeriesTitle
+                          ?? document.SeriesTitle
                           ?? ResolveSeriesTitle(bookDirectory, seriesId)
                           ?? seriesId;
-        var rights = options.Rights
-                     ?? BookYaml.GetString(BookYaml.LoadFile(Path.Combine(bookDirectory, "book.yaml")), "rights")
-                     ?? BookYaml.GetString(BookYaml.LoadFile(Path.Combine(bookDirectory, "book.yaml")), "copyright");
+        var rights = options.Rights ?? document.Rights;
 
         Directory.CreateDirectory(outputDirectory);
         var stem = Path.Combine(outputDirectory, bookId);
         var mdPath = stem + ".md";
         var htmlPath = stem + ".html";
         var txtPath = stem + ".txt";
-        var pdfPath = stem + ".pdf";
 
-        var markdown = BookPrintAssembler.AssembleReaderMarkdownFromFiles(
-            book.Chapters.Select(c => c.FilePath),
-            authorMode: showAll,
-            includePublicDateline: settings.IncludePublicDateline);
-        ManuscriptDocumentEmitters.WriteMarkdown(markdown, mdPath);
+        if (options.PdfOutput is BookPdfOutput.Combine or BookPdfOutput.Both)
+        {
+            WriteCompanions(
+                document,
+                bookDirectory,
+                document.Title,
+                markdownAuthorMode: showAll,
+                settings,
+                seriesTitle,
+                mdPath,
+                htmlPath,
+                txtPath,
+                contentRootHint: Directory.GetParent(bookDirectory)?.FullName);
+        }
 
-        var css = StylesheetLocator.Find(bookDirectory, contentRootHint: Directory.GetParent(bookDirectory)?.FullName);
-        var meta = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        if (!string.IsNullOrWhiteSpace(book.Author))
-            meta["author"] = book.Author!;
-        if (!string.IsNullOrWhiteSpace(seriesTitle))
-            meta["series"] = seriesTitle;
-
-        ManuscriptDocumentEmitters.WriteHtml(book.Title, markdown, htmlPath, css, showAll, meta);
-        ManuscriptDocumentEmitters.WritePlainText(markdown, txtPath, showAll);
-
-        ManuscriptPagedDocumentBuilder.WriteBookPdf(
-            markdown,
-            pdfPath,
-            new ManuscriptPagedDocumentBuilder.BookCoverMeta(book.Title, book.Subtitle, seriesTitle, book.Author, rights),
-            settings);
+        var pdf = BookPdfWriter.Write(
+            document,
+            outputDirectory,
+            bookId,
+            options.PdfOutput,
+            settings,
+            seriesTitle,
+            rights);
 
         return new BookPrintPaths(
             Path.GetFullPath(mdPath),
             Path.GetFullPath(htmlPath),
             Path.GetFullPath(txtPath),
-            Path.GetFullPath(pdfPath));
+            pdf.CombinedPdfPath ?? pdf.ChaptersDirectory!);
     }
 
     /// <summary>
@@ -91,50 +91,50 @@ public static class BookPrintExporter
         ArgumentException.ThrowIfNullOrWhiteSpace(outputDirectory);
         options ??= new BookPrintOptions();
 
-        var settings = options.ResolveSettings(book.DirectoryPath);
+        var document = BookDocument.Open(book.DirectoryPath);
+        var settings = options.ResolveSettings(document.DirectoryPath);
         var showAll = options.ResolveShowAllMetadataTags(book.DebugMode);
         var seriesTitle = options.SeriesTitle
+                          ?? document.SeriesTitle
                           ?? ResolveSeriesTitle(book.DirectoryPath, book.SeriesId)
                           ?? book.SeriesId;
-        var yaml = BookYaml.LoadFile(Path.Combine(book.DirectoryPath, "book.yaml"));
-        var rights = options.Rights
-                     ?? BookYaml.GetString(yaml, "rights")
-                     ?? BookYaml.GetString(yaml, "copyright");
+        var rights = options.Rights ?? document.Rights;
 
         Directory.CreateDirectory(outputDirectory);
         var stem = Path.Combine(outputDirectory, book.Id);
         var mdPath = stem + ".md";
         var htmlPath = stem + ".html";
         var txtPath = stem + ".txt";
-        var pdfPath = stem + ".pdf";
 
-        var markdown = BookPrintAssembler.AssembleReaderMarkdownFromFiles(
-            book.Chapters.Select(c => c.FilePath),
-            authorMode: showAll,
-            includePublicDateline: settings.IncludePublicDateline);
-        ManuscriptDocumentEmitters.WriteMarkdown(markdown, mdPath);
+        if (options.PdfOutput is BookPdfOutput.Combine or BookPdfOutput.Both)
+        {
+            WriteCompanions(
+                document,
+                book.DirectoryPath,
+                document.Title,
+                markdownAuthorMode: showAll,
+                settings,
+                seriesTitle,
+                mdPath,
+                htmlPath,
+                txtPath,
+                contentRootHint: null);
+        }
 
-        var css = StylesheetLocator.Find(book.DirectoryPath);
-        var meta = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        if (!string.IsNullOrWhiteSpace(book.Author))
-            meta["author"] = book.Author!;
-        if (!string.IsNullOrWhiteSpace(seriesTitle))
-            meta["series"] = seriesTitle!;
-
-        ManuscriptDocumentEmitters.WriteHtml(book.Title, markdown, htmlPath, css, showAll, meta);
-        ManuscriptDocumentEmitters.WritePlainText(markdown, txtPath, showAll);
-
-        ManuscriptPagedDocumentBuilder.WriteBookPdf(
-            markdown,
-            pdfPath,
-            new ManuscriptPagedDocumentBuilder.BookCoverMeta(book.Title, book.Subtitle, seriesTitle, book.Author, rights),
-            settings);
+        var pdf = BookPdfWriter.Write(
+            document,
+            outputDirectory,
+            book.Id,
+            options.PdfOutput,
+            settings,
+            seriesTitle,
+            rights);
 
         return new BookPrintPaths(
             Path.GetFullPath(mdPath),
             Path.GetFullPath(htmlPath),
             Path.GetFullPath(txtPath),
-            Path.GetFullPath(pdfPath));
+            pdf.CombinedPdfPath ?? pdf.ChaptersDirectory!);
     }
 
     [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage(Justification = "Series.yaml title resolution filesystem edges.")]
@@ -156,113 +156,32 @@ public static class BookPrintExporter
         return seriesId;
     }
 
-    static BookInfo LoadBookFromDirectory(string bookDirectory, string? seriesId, string bookId)
+    static void WriteCompanions(
+        BookDocument document,
+        string bookDirectory,
+        string title,
+        bool markdownAuthorMode,
+        ManuscriptPrintSettings settings,
+        string? seriesTitle,
+        string mdPath,
+        string htmlPath,
+        string txtPath,
+        string? contentRootHint)
     {
-        var protocol = Directory.Exists(Path.Combine(bookDirectory, "Chapters"))
-                       || Directory.Exists(Path.Combine(bookDirectory, "Appendices"));
-        var yaml = BookYaml.LoadFile(Path.Combine(bookDirectory, "book.yaml"));
-        var title = BookYaml.GetString(yaml, "title") ?? bookId;
-        var subtitle = BookYaml.GetString(yaml, "subtitle");
-        // Prefer singular author; NMP books often use authors: [ ... ] only.
-        var author = BookYaml.GetString(yaml, "author") ?? FirstAuthor(yaml);
-        var debugMode = BookYaml.GetBool(yaml, "debug_mode");
+        var markdown = BookPrintAssembler.AssembleReaderMarkdownFromFiles(
+            document.Chapters.Select(c => c.FilePath),
+            authorMode: markdownAuthorMode,
+            includePublicDateline: settings.IncludePublicDateline);
+        ManuscriptDocumentEmitters.WriteMarkdown(markdown, mdPath);
 
-        var chapters = new List<ChapterInfo>();
-        var chDir = ResolveDir(bookDirectory, protocol ? "Chapters" : "chapters", "chapters", "Chapters");
-        if (chDir is not null)
-        {
-            foreach (var file in Directory.GetFiles(chDir, "*.md")
-                         .OrderBy(f => Path.GetFileName(f), StringComparer.Ordinal))
-            {
-                var stem = Path.GetFileNameWithoutExtension(file);
-                var sortKey = TryParsePrefix(stem);
-                chapters.Add(new ChapterInfo(stem, ReadHeadingTitle(file) ?? stem, ChapterKind.Chapter, sortKey, file));
-            }
-        }
+        var css = StylesheetLocator.Find(bookDirectory, contentRootHint: contentRootHint);
+        var meta = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (!string.IsNullOrWhiteSpace(document.Author))
+            meta["author"] = document.Author!;
+        if (!string.IsNullOrWhiteSpace(seriesTitle))
+            meta["series"] = seriesTitle;
 
-        var apDir = ResolveDir(bookDirectory, protocol ? "Appendices" : "appendices", "appendices", "Appendices");
-        if (apDir is not null)
-        {
-            foreach (var file in Directory.GetFiles(apDir, "*.md")
-                         .OrderBy(f => Path.GetFileName(f), StringComparer.Ordinal))
-            {
-                var stem = Path.GetFileNameWithoutExtension(file);
-                chapters.Add(new ChapterInfo(stem, ReadHeadingTitle(file) ?? stem, ChapterKind.Appendix, chapters.Count, file));
-            }
-        }
-
-        var ordered = chapters
-            .OrderBy(c => c.Kind)
-            .ThenBy(c => c.SortKey)
-            .ThenBy(c => c.FilePath, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        return new BookInfo(
-            bookId,
-            title,
-            subtitle,
-            author,
-            Path.GetFullPath(bookDirectory),
-            seriesId,
-            ordered,
-            ChapterOrderFromHeading: false,
-            debugMode,
-            Array.Empty<ReferenceSetInfo>());
-    }
-
-    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage(Justification = "Duplicate dir/prefix helpers; exercised via ExportBookFolder.")]
-    static string? ResolveDir(string parent, string preferred, params string[] fallbacks)
-    {
-        var preferredPath = Path.Combine(parent, preferred);
-        if (Directory.Exists(preferredPath))
-            return preferredPath;
-        foreach (var name in fallbacks)
-        {
-            var p = Path.Combine(parent, name);
-            if (Directory.Exists(p))
-                return p;
-        }
-
-        return null;
-    }
-
-    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage(Justification = "Stem sort-key parse; covered indirectly.")]
-    static double TryParsePrefix(string stem)
-    {
-        var i = 0;
-        while (i < stem.Length && (char.IsDigit(stem[i]) || stem[i] == '.'))
-            i++;
-        if (i == 0)
-            return double.MaxValue;
-        return double.TryParse(stem[..i].TrimEnd('.'), System.Globalization.NumberStyles.Float,
-            System.Globalization.CultureInfo.InvariantCulture, out var n)
-            ? n
-            : double.MaxValue;
-    }
-
-    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage(Justification = "Heading sniff for catalog titles.")]
-    static string? ReadHeadingTitle(string path)
-    {
-        foreach (var line in File.ReadLines(path))
-        {
-            var t = line.Trim();
-            if (t.Length == 0 || t.StartsWith("---", StringComparison.Ordinal))
-                continue;
-            if (t.StartsWith('#'))
-                return t.TrimStart('#').Trim();
-            break;
-        }
-
-        return null;
-    }
-
-    static string? FirstAuthor(Dictionary<string, object?> yaml)
-    {
-        if (!yaml.TryGetValue("authors", out var raw) || raw is null)
-            return null;
-        if (raw is System.Collections.IList list && list.Count > 0)
-            return list[0]?.ToString()?.Trim();
-        var s = raw.ToString()?.Trim();
-        return string.IsNullOrWhiteSpace(s) ? null : s;
+        ManuscriptDocumentEmitters.WriteHtml(title, markdown, htmlPath, css, markdownAuthorMode, meta);
+        ManuscriptDocumentEmitters.WritePlainText(markdown, txtPath, markdownAuthorMode);
     }
 }

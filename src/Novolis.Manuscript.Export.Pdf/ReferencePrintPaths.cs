@@ -5,7 +5,7 @@ using Novolis.Manuscript;
 namespace Novolis.Manuscript.Export.Pdf;
 
 /// <summary>Paths written by a reference-manual print export.</summary>
-/// <param name="MarkdownPath">Combined reference Markdown (includes TOC).</param>
+/// <param name="MarkdownPath">Combined reference Markdown (folder headings, no markdown Contents list).</param>
 /// <param name="HtmlPath">HTML companion.</param>
 /// <param name="TextPath">Plain-text companion.</param>
 /// <param name="PdfPath">PDF output with cover and Contents section.</param>

@@ -1,10 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using Novolis.Manuscript;
 
 namespace Novolis.Manuscript.Export.Pdf;
 
-/// <summary>Exports series reference manuals with a cover page and a Contents section.</summary>
+/// <summary>Exports series reference manuals with a cover page. Contents come from layout, not a markdown list.</summary>
 [ExcludeFromCodeCoverage]
 public static class ReferenceManualExporter
 {
@@ -43,28 +42,8 @@ public static class ReferenceManualExporter
         if (files.Count == 0)
             throw new InvalidOperationException($"No Markdown files under {referencesDirectory}");
 
-        var inputs = files.Select(f => new RefSource(f, referencesDirectory)).ToList();
-        var (fullMd, bodyMd, toc) = BuildCombinedMarkdown(inputs);
-        coverSubtitle ??= ToTitleCaseWords(seriesId);
-
-        Directory.CreateDirectory(outputDirectory);
-        var stem = Path.Combine(outputDirectory, fileStem);
-        var mdPath = stem + ".md";
-        var htmlPath = stem + ".html";
-        var txtPath = stem + ".txt";
-        var pdfPath = stem + ".pdf";
-
-        ManuscriptDocumentEmitters.WriteMarkdown(fullMd, mdPath);
-        var css = StylesheetLocator.Find(referencesDirectory);
-        ManuscriptDocumentEmitters.WriteHtml(title, fullMd, htmlPath, css, showAllTags: false);
-        ManuscriptDocumentEmitters.WritePlainText(fullMd, txtPath, showAllTags: false);
-        ManuscriptPagedDocumentBuilder.WriteReferencePdf(title, coverSubtitle, fullMd, pdfPath, settings);
-
-        return new ReferencePrintPaths(
-            Path.GetFullPath(mdPath),
-            Path.GetFullPath(htmlPath),
-            Path.GetFullPath(txtPath),
-            Path.GetFullPath(pdfPath));
+        coverSubtitle ??= ReferenceMarkdown.ToTitleCaseWords(seriesId);
+        return WriteSet(files, referencesDirectory, outputDirectory, fileStem, title, coverSubtitle, settings);
     }
 
     /// <summary>Exports a catalog <see cref="ReferenceSetInfo"/> to multi-format artifacts.</summary>
@@ -81,105 +60,47 @@ public static class ReferenceManualExporter
         if (referenceSet.Files.Count == 0)
             throw new InvalidOperationException($"Reference set '{referenceSet.Id}' has no files.");
 
-        var contentRoot = referenceSet.DirectoryPath;
-        var inputs = referenceSet.Files
-            .Select(f => new RefSource(f.FilePath, contentRoot))
-            .ToList();
-        var (fullMd, bodyMd, toc) = BuildCombinedMarkdown(inputs);
-        var coverSubtitle = ToTitleCaseWords(seriesId ?? referenceSet.Id);
+        var files = referenceSet.Files.Select(f => f.FilePath).ToList();
+        var coverSubtitle = ReferenceMarkdown.ToTitleCaseWords(seriesId ?? referenceSet.Id);
+        return WriteSet(
+            files,
+            referenceSet.DirectoryPath,
+            outputDirectory,
+            referenceSet.Id,
+            referenceSet.Title,
+            coverSubtitle,
+            settings);
+    }
+
+    static ReferencePrintPaths WriteSet(
+        IReadOnlyList<string> files,
+        string contentRoot,
+        string outputDirectory,
+        string fileStem,
+        string title,
+        string? subtitle,
+        ManuscriptPrintSettings settings)
+    {
+        var chapters = ReferenceMarkdown.LoadFiles(files, contentRoot);
+        var fullMd = BookPdfWriter.CombineBodies(chapters).ToString();
 
         Directory.CreateDirectory(outputDirectory);
-        var stem = Path.Combine(outputDirectory, referenceSet.Id);
+        var stem = Path.Combine(outputDirectory, fileStem);
         var mdPath = stem + ".md";
         var htmlPath = stem + ".html";
         var txtPath = stem + ".txt";
         var pdfPath = stem + ".pdf";
 
         ManuscriptDocumentEmitters.WriteMarkdown(fullMd, mdPath);
-        var css = StylesheetLocator.Find(referenceSet.DirectoryPath);
-        ManuscriptDocumentEmitters.WriteHtml(referenceSet.Title, fullMd, htmlPath, css, showAllTags: false);
+        var css = StylesheetLocator.Find(contentRoot);
+        ManuscriptDocumentEmitters.WriteHtml(title, fullMd, htmlPath, css, showAllTags: false);
         ManuscriptDocumentEmitters.WritePlainText(fullMd, txtPath, showAllTags: false);
-        ManuscriptPagedDocumentBuilder.WriteReferencePdf(referenceSet.Title, coverSubtitle, fullMd, pdfPath, settings);
+        BookPdfWriter.WriteCombined(chapters, title, subtitle, pdfPath, settings);
 
         return new ReferencePrintPaths(
             Path.GetFullPath(mdPath),
             Path.GetFullPath(htmlPath),
             Path.GetFullPath(txtPath),
             Path.GetFullPath(pdfPath));
-    }
-
-    readonly record struct RefSource(string AbsolutePath, string ContentRoot);
-
-    readonly record struct TocEntry(int Level, string Title);
-
-    static (string fullMd, string bodyMd, List<TocEntry> toc) BuildCombinedMarkdown(
-        IReadOnlyList<RefSource> refInputs)
-    {
-        var toc = new List<TocEntry>();
-        var body = new StringBuilder();
-        string? prevContentRoot = null;
-        var prevRelParts = new List<string>();
-
-        foreach (var rsf in refInputs)
-        {
-            if (!string.Equals(prevContentRoot, rsf.ContentRoot, StringComparison.OrdinalIgnoreCase))
-            {
-                prevContentRoot = rsf.ContentRoot;
-                prevRelParts = [];
-            }
-
-            var relToContent = Path.GetRelativePath(rsf.ContentRoot, rsf.AbsolutePath);
-            var dir = Path.GetDirectoryName(relToContent);
-            var parts = string.IsNullOrEmpty(dir)
-                ? new List<string>()
-                : dir.Split([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar], StringSplitOptions.RemoveEmptyEntries).ToList();
-
-            var diverge = 0;
-            var minLen = System.Math.Min(parts.Count, prevRelParts.Count);
-            while (diverge < minLen && string.Equals(parts[diverge], prevRelParts[diverge], StringComparison.OrdinalIgnoreCase))
-                diverge++;
-
-            for (var i = diverge; i < parts.Count; i++)
-            {
-                var subTitle = ToTitleCaseWords(parts[i]);
-                var level = System.Math.Min(i + 2, 6);
-                body.AppendLine($"{new string('#', level)} {subTitle}");
-                body.AppendLine();
-                toc.Add(new TocEntry(level, subTitle));
-            }
-
-            prevRelParts = [.. parts];
-
-            var fileTitle = ToTitleCaseWords(Path.GetFileNameWithoutExtension(rsf.AbsolutePath));
-            var fileLevel = System.Math.Min(parts.Count + 2, 6);
-            toc.Add(new TocEntry(fileLevel, fileTitle));
-
-            if (File.Exists(rsf.AbsolutePath))
-            {
-                body.Append(File.ReadAllText(rsf.AbsolutePath));
-                body.AppendLine();
-            }
-        }
-
-        var bodyMd = body.ToString();
-        var tocSb = new StringBuilder();
-        tocSb.AppendLine("# Contents");
-        tocSb.AppendLine();
-        foreach (var e in toc)
-        {
-            var padLen = System.Math.Max(0, (e.Level - 1) * 2);
-            tocSb.Append(' ', padLen).Append("- ").AppendLine(e.Title);
-        }
-
-        var fullMd = tocSb + Environment.NewLine + "---" + Environment.NewLine + Environment.NewLine + bodyMd;
-        return (fullMd, bodyMd, toc);
-    }
-
-    static string ToTitleCaseWords(string? folderName)
-    {
-        if (string.IsNullOrWhiteSpace(folderName))
-            return "";
-        return string.Join(" ", folderName.Split('-', StringSplitOptions.RemoveEmptyEntries)
-            .Select(s => s.Length > 0 ? char.ToUpperInvariant(s[0]) + s[1..] : s));
     }
 }
