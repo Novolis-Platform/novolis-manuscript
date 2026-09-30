@@ -5,54 +5,6 @@ using YamlDotNet.RepresentationModel;
 
 namespace Novolis.Manuscript;
 
-/// <summary>Known metadata format for a chapter document.</summary>
-public enum ManuscriptMetadataFormat
-{
-    /// <summary>No recognized metadata block.</summary>
-    None,
-    /// <summary>Obsidian-style <c>&gt; [!tag]</c> callouts.</summary>
-    Callout,
-    /// <summary>YAML front matter between <c>---</c> fences.</summary>
-    Yaml
-}
-
-/// <summary>Parsed chapter metadata fields.</summary>
-public sealed class ManuscriptChapterMetadata
-{
-    /// <summary>Chapter number string.</summary>
-    public string? Number { get; set; }
-
-    /// <summary>Chapter title.</summary>
-    public string? Title { get; set; }
-
-    /// <summary>Date field.</summary>
-    public string? Date { get; set; }
-
-    /// <summary>Time field.</summary>
-    public string? Time { get; set; }
-
-    /// <summary>System / location volume.</summary>
-    public string? System { get; set; }
-
-    /// <summary>Location.</summary>
-    public string? Location { get; set; }
-
-    /// <summary>Point of view.</summary>
-    public string? Pov { get; set; }
-
-    /// <summary>Characters list.</summary>
-    public string? Characters { get; set; }
-
-    /// <summary>Status.</summary>
-    public string? Status { get; set; }
-
-    /// <summary>Notes.</summary>
-    public string? Notes { get; set; }
-
-    /// <summary>Additional unknown callout keys.</summary>
-    public Dictionary<string, string> Extra { get; } = new(StringComparer.OrdinalIgnoreCase);
-}
-
 /// <summary>Parse and apply chapter metadata callouts / YAML.</summary>
 public static class ManuscriptMetadata
 {

@@ -6,56 +6,6 @@ using Novolis.Markup.Markdown;
 
 namespace Novolis.Manuscript.Export.Audio;
 
-/// <summary>Kind of speech segment.</summary>
-public enum SpeechSegmentKind
-{
-    /// <summary>Spoken text.</summary>
-    Text,
-    /// <summary>Silence / pause.</summary>
-    Pause
-}
-
-/// <summary>One segment in a speech plan.</summary>
-public sealed record SpeechSegment(SpeechSegmentKind Kind, string? Text, int PauseMs)
-{
-    /// <summary>Creates a spoken segment.</summary>
-    public static SpeechSegment Spoken(string text) => new(SpeechSegmentKind.Text, text, 0);
-
-    /// <summary>Creates a pause segment.</summary>
-    public static SpeechSegment Pause(int milliseconds) => new(SpeechSegmentKind.Pause, null, milliseconds);
-}
-
-/// <summary>Voice / planner settings for manuscript speech.</summary>
-public sealed class SpeechOptions
-{
-    /// <summary>Pause inserted between scene breaks (ms).</summary>
-    public int SceneBreakMs { get; init; } = 1200;
-
-    /// <summary>Maximum characters per spoken chunk.</summary>
-    public int MaxChunkChars { get; init; } = 2800;
-
-    /// <summary>Whole-word pronunciation rewrites (longest keys first).</summary>
-    public IReadOnlyDictionary<string, string> Pronunciation { get; init; } =
-        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-}
-
-/// <summary>Planned speech for a chapter.</summary>
-public sealed class SpeechPlan
-{
-    /// <summary>Creates a plan.</summary>
-    public SpeechPlan(IReadOnlyList<SpeechSegment> segments, string planHash)
-    {
-        Segments = segments;
-        PlanHash = planHash;
-    }
-
-    /// <summary>Ordered segments.</summary>
-    public IReadOnlyList<SpeechSegment> Segments { get; }
-
-    /// <summary>Content-addressed hash of the plan.</summary>
-    public string PlanHash { get; }
-}
-
 /// <summary>Builds TTS speech plans from manuscript markdown bodies.</summary>
 public static class SpeechPlanner
 {

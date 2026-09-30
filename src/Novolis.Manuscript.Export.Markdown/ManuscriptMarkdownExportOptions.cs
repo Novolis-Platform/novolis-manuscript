@@ -1,15 +1,5 @@
 namespace Novolis.Manuscript.Export.Markdown;
 
-/// <summary>HTML companion theme (GitHub-flavored Markdown CSS, light or dark).</summary>
-public enum ManuscriptHtmlTheme
-{
-    /// <summary>GitHub light theme.</summary>
-    GitHubLight,
-
-    /// <summary>GitHub dark theme.</summary>
-    GitHubDark,
-}
-
 /// <summary>Options for manuscript Markdown / HTML export.</summary>
 public sealed class ManuscriptMarkdownExportOptions
 {
@@ -31,9 +21,3 @@ public sealed class ManuscriptMarkdownExportOptions
     /// <summary>Optional rights line (unused in MD body; reserved for hosts).</summary>
     public string? Rights { get; set; }
 }
-
-/// <summary>Paths written by <see cref="ManuscriptMarkdownExporter"/>.</summary>
-public sealed record ManuscriptMarkdownPaths(
-    string ReaderMarkdownPath,
-    string? AuthorMarkdownPath,
-    string? HtmlPath);

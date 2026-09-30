@@ -2,26 +2,6 @@ using Novolis.Manuscript.Protocol;
 
 namespace Novolis.Manuscript;
 
-/// <summary>Severity of a diagnostic finding.</summary>
-public enum DiagnosticSeverity
-{
-    /// <summary>Informational note.</summary>
-    Info,
-
-    /// <summary>Non-fatal issue.</summary>
-    Warning,
-
-    /// <summary>Blocking structural problem.</summary>
-    Error,
-}
-
-/// <summary>One manuscript doctor finding.</summary>
-public sealed record DiagnosticFinding(
-    DiagnosticSeverity Severity,
-    string Code,
-    string Message,
-    string? Path = null);
-
 /// <summary>Structural diagnostics for series/book trees (replaces CLI doctor).</summary>
 [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage(Justification = "Doctor orthogonal to print remodel.")]
 public static class ManuscriptDoctor

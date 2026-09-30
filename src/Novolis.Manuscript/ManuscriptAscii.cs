@@ -2,16 +2,6 @@ using System.Text;
 
 namespace Novolis.Manuscript;
 
-/// <summary>One non-ASCII codepoint remaining after known replacements (or during scan).</summary>
-public sealed record AsciiIssue(string Path, int Line, int Column, int Codepoint, int Index);
-
-/// <summary>Result of normalizing one file or string to ASCII house style.</summary>
-public sealed record AsciiNormalizeResult(
-    string Text,
-    int Replacements,
-    bool HasRemainingNonAscii,
-    IReadOnlyList<AsciiIssue> RemainingIssues);
-
 /// <summary>
 /// House-style ASCII normalization for manuscript Markdown:
 /// em/en dash → '-', curly quotes → straight, ellipsis → '...', NBSP → space,

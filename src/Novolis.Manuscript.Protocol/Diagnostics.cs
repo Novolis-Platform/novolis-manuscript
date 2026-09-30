@@ -66,10 +66,3 @@ public static class ManuscriptDiagnosticCodes
     /// <summary>book.yaml title differs from chapter H1 (reserved; unused in NMP/1 core).</summary>
     public const string MetadataTitleDiffersFromHeading = "NMP106";
 }
-
-/// <summary>One protocol diagnostic finding.</summary>
-public sealed record ManuscriptDiagnostic(
-    ManuscriptDiagnosticSeverity Severity,
-    string Code,
-    string Message,
-    string Path);
