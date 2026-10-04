@@ -5,10 +5,12 @@
     <RootNamespace>Novolis.Manuscript.Export.Audio</RootNamespace>
     <Description>Manuscript speech planning, voice-map YAML, audiobook pipeline, and preview.</Description>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS0618;CA1416</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <LibraryReference Include="Novolis.Markup.Markdown" />
     <PackageReference Include="NAudio" />
+    <PackageReference Include="NAudio.Wasapi" />
     <PackageReference Include="YamlDotNet" />
     <ProjectReference Include="..\Novolis.Manuscript\Novolis.Manuscript.csproj" />
   </ItemGroup>

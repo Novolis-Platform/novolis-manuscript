@@ -8,7 +8,9 @@ namespace Novolis.Manuscript.Export.Audio;
 public sealed class NaudioMp3Player : IAudioPlayer, IDisposable
 {
     readonly object _gate = new();
-    WaveOutEvent? _waveOut;
+#pragma warning disable CS0618
+    WasapiOut? _waveOut;
+#pragma warning restore CS0618
     CancellationTokenRegistration _registration;
 
     /// <inheritdoc />
@@ -22,8 +24,10 @@ public sealed class NaudioMp3Player : IAudioPlayer, IDisposable
 
         var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var stream = new MemoryStream(mp3, writable: false);
-        var reader = new Mp3FileReader(stream);
-        var waveOut = new WaveOutEvent();
+        var reader = new AudioFileReader(stream);
+#pragma warning disable CS0618
+        var waveOut = new WasapiOut();
+#pragma warning restore CS0618
         waveOut.Init(reader);
 
         lock (_gate)

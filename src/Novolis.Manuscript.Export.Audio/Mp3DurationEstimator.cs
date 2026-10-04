@@ -15,7 +15,7 @@ static class Mp3DurationEstimator
         try
         {
             using var stream = new MemoryStream(mp3, writable: false);
-            using var reader = new Mp3FileReader(stream);
+            using var reader = new AudioFileReader(stream);
             return (long)reader.TotalTime.TotalMilliseconds;
         }
         catch
