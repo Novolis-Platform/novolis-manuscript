@@ -8,7 +8,7 @@ namespace Novolis.Manuscript.Export.Pdf;
 
 /// <summary>
 /// Bridges typed markdown + <see cref="ManuscriptPrintSettings"/> into a
-/// <see cref="Document"/> via <see cref="MarkdownPagedDocumentMapper"/>, and writes PDF via
+/// <see cref="Document"/> via <see cref="MarkdownDocumentMapper"/>, and writes PDF via
 /// <c>Novolis.Documents.Skia</c>.
 /// </summary>
 internal static class ManuscriptPagedDocumentBuilder
@@ -42,7 +42,7 @@ internal static class ManuscriptPagedDocumentBuilder
             cover.Rights,
             includeToc,
             includeCover);
-        var document = MarkdownPagedDocumentMapper.FromDocument(markdown, options);
+        var document = MarkdownDocumentMapper.FromDocument(markdown, options);
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(pdfPath))!);
         DocumentPdf.Write(document, pdfPath);
     }
