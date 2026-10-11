@@ -8,7 +8,7 @@ namespace Novolis.Manuscript.Export.Pdf;
 
 /// <summary>
 /// Bridges typed markdown + <see cref="ManuscriptPrintSettings"/> into a
-/// <see cref="PagedDocument"/> via <see cref="MarkdownPagedDocumentMapper"/>, and writes PDF via
+/// <see cref="Document"/> via <see cref="MarkdownPagedDocumentMapper"/>, and writes PDF via
 /// <c>Novolis.Documents.Skia</c>.
 /// </summary>
 internal static class ManuscriptPagedDocumentBuilder
