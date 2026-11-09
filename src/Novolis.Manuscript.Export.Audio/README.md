@@ -8,6 +8,8 @@
 
 TTS and audiobook export for manuscript workspaces.
 
+Default synthesizer: **`EdgeTtsSynthesizer`** (`Novolis.Audio.Voice.EdgeTts`, LGPL) — online Edge Read Aloud, no Azure credentials. Apps may also plug in Azure Speech via `ISynthesizer`.
+
 ## Install
 
 ```powershell
@@ -16,6 +18,9 @@ dotnet add package Novolis.Manuscript.Export.Audio
 
 ## Usage
 
-Use the export pipeline with a configured speech synthesizer to create
-audiobook segments and MP3 output.
+```csharp
+using var synth = new EdgeTtsSynthesizer();
+var pipeline = new AudiobookPipeline(synth);
+await pipeline.GenerateAsync(bookId, chapters, new VoiceSettings(), options);
+```
 

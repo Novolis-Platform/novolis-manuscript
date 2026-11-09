@@ -67,7 +67,7 @@ public static class VoiceMapStore
         sb.AppendLine("generation:");
         sb.AppendLine($"  max_chunk_chars: {settings.MaxChunkChars}");
         sb.AppendLine();
-        sb.AppendLine("# Spoken-text rewrites for Azure Speech (manuscript files stay unchanged).");
+        sb.AppendLine("# Spoken-text rewrites for TTS (manuscript files stay unchanged).");
         sb.AppendLine("# Match whole words only, longest keys first. Values are phonetic spellings");
         sb.AppendLine("# the neural voice is more likely to say correctly.");
         sb.AppendLine("pronunciation:");
@@ -105,7 +105,7 @@ public static class VoiceMapStore
         {
             var narrator = Narrator ?? new NarratorDto();
             var voice = string.IsNullOrWhiteSpace(narrator.Voice)
-                ? "en-US-AvaMultilingualNeural"
+                ? "en-US-AvaNeural"
                 : narrator.Voice.Trim();
             var rate = ParsePercent(narrator.Rate, -4);
             var pitch = ParseHertz(narrator.Pitch, 0);

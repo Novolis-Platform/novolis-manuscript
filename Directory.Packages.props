@@ -20,6 +20,7 @@
     <PackageVersion Include="Svg.Skia" Version="5.2.3" />
     <PackageVersion Include="Novolis.Analyzers.StackBoundaries" Version="2026.1.*" />
     <PackageVersion Include="Novolis.Audio.Voice.AzureSpeech" Version="2026.1.*" />
+    <PackageVersion Include="Novolis.Audio.Voice.EdgeTts" Version="2026.1.*" />
     <PackageVersion Include="Novolis.Avalonia.Markdown" Version="2026.1.*" />
     <PackageVersion Include="Novolis.Documents" Version="2026.1.*" />
     <PackageVersion Include="Novolis.Documents.Layout" Version="2026.1.*" />

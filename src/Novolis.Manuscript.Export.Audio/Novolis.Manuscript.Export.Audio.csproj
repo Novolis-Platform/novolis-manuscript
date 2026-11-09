@@ -3,11 +3,12 @@
     <PackageId>Novolis.Manuscript.Export.Audio</PackageId>
     <IsPackable>true</IsPackable>
     <RootNamespace>Novolis.Manuscript.Export.Audio</RootNamespace>
-    <Description>Manuscript speech planning, voice-map YAML, audiobook pipeline, and preview.</Description>
+    <Description>Manuscript speech planning, voice-map YAML, Edge TTS synthesizer, audiobook pipeline, and preview.</Description>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS0618;CA1416</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <LibraryReference Include="Novolis.Audio.Voice.EdgeTts" />
     <LibraryReference Include="Novolis.Markup.Markdown" />
     <PackageReference Include="NAudio" />
     <PackageReference Include="NAudio.Wasapi" />

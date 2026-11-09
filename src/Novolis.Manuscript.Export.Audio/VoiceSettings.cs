@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using Novolis.Audio.Voice.EdgeTts;
 
 namespace Novolis.Manuscript.Export.Audio;
 
@@ -6,8 +7,8 @@ namespace Novolis.Manuscript.Export.Audio;
 [ExcludeFromCodeCoverage(Justification = "TTS voice defaults orthogonal to print remodel.")]
 public sealed class VoiceSettings
 {
-    /// <summary>Azure Speech voice short name (default: book narrator Ava).</summary>
-    public string Voice { get; init; } = "en-US-AvaMultilingualNeural";
+    /// <summary>Neural voice short name (Azure or Edge; default: book narrator Ava).</summary>
+    public string Voice { get; init; } = "en-US-AvaNeural";
 
     /// <summary>Prosody rate in percent (default: −4% to match book narrator).</summary>
     public int RatePercent { get; init; } = -4;
@@ -38,4 +39,30 @@ public sealed class VoiceSettings
         MaxChunkChars = MaxChunkChars,
         Pronunciation = Pronunciation,
     };
+
+    /// <summary>Maps to Edge Read Aloud synthesis options (curated voice fallback: Ava).</summary>
+    public EdgeTtsSynthesisOptions ToEdgeTtsOptions() => new()
+    {
+        Voice = ResolveEdgeVoice(Voice),
+        Rate = new ProsodyPercent(RatePercent),
+        Pitch = new ProsodyHertz(PitchHertz),
+        Volume = new ProsodyPercent(VolumePercent),
+    };
+
+    static EdgeVoice ResolveEdgeVoice(string? shortName)
+    {
+        if (EdgeVoiceCatalog.TryParse(shortName, out var voice))
+            return voice;
+
+        // Azure Multilingual short names map onto the closest curated Edge voice.
+        if (!string.IsNullOrWhiteSpace(shortName)
+            && shortName.Contains("Multilingual", StringComparison.OrdinalIgnoreCase))
+        {
+            var trimmed = shortName.Replace("Multilingual", string.Empty, StringComparison.OrdinalIgnoreCase);
+            if (EdgeVoiceCatalog.TryParse(trimmed, out voice))
+                return voice;
+        }
+
+        return EdgeVoice.EnUsAva;
+    }
 }
