@@ -103,7 +103,7 @@ public sealed class ManuscriptParsingCoverageTests
         await Assert.That(speech.SceneBreakMs).IsEqualTo(321);
         await Assert.That(speech.MaxChunkChars).IsEqualTo(654);
         await Assert.That(speech.Pronunciation["a"]).IsEqualTo("b");
-        await Assert.That(settings.Voice).IsEqualTo("en-US-AvaMultilingualNeural");
+        await Assert.That(settings.Voice).IsEqualTo("en-US-AvaNeural");
         await Assert.That(settings.RatePercent).IsEqualTo(-4);
         await Assert.That(settings.PitchHertz).IsEqualTo(0);
         await Assert.That(settings.VolumePercent).IsEqualTo(0);
